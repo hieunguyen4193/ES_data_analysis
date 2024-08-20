@@ -1,0 +1,555 @@
+---
+title: "Integration and Downstream analysis, remove hashtag-doublet, all samples"
+author:
+  - "trnguyen@ukaachen.de"
+date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    keep_md: no
+    df_print: paged
+    toc: true
+    toc_float:
+      toc_collapsed: false
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
+---
+
+
+```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+ $(document).ready(function() {
+    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+    // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+<style type="text/css">
+    div.datatables { height: auto !important;}
+</style>
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
+#####----------------------------------------------------------------------#####
+#
+# trnguyen@ukaachen.de
+#
+#####----------------------------------------------------------------------#####
+
+##### clean up #####
+# gc()
+# rm(list = ls())
+
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
+source(file.path(scrna_pipeline_src, "import_libraries.R"))
+source(file.path(scrna_pipeline_src, "helper_functions.R"))
+
+#####----------------------------------------------------------------------#####
+# CONFIGURATIONS 
+#####----------------------------------------------------------------------#####
+analysis.round <- "1st"
+
+chosen.seed <- 42
+num.dim.integration <- 25 
+num.PCA <- 25
+num.dim.cluster <- 25
+num.PC.used.in.Clustering <- 25
+
+path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/processes_src"
+
+outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
+PROJECT <- "EStange_20240411_SeuratV4"
+
+path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+
+path.to.01.output <- file.path(path.to.main.output, "01_output")
+path.to.02.output <- file.path(path.to.main.output, "02_output")
+path.to.03.output <- file.path(path.to.main.output, "03_output")
+dir.create(path.to.03.output, showWarnings = FALSE, recursive = TRUE)
+
+all.samples <- c("adult",
+                 "adult_GF",
+                 "adult_SPF",
+                 "d10_SPF",
+                 "d15_SPF",
+                 "d20_SPF",
+                 "d4_GF",
+                 "d4_LPS",
+                 "d4_SPF",
+                 "d7",
+                 "d7_GF",
+                 "d7_SPF")
+
+all.2nd.run.samples <- setdiff(all.samples, c("adult", "d7"))
+cluster.resolution <- 0.5
+```
+
+
+
+# Data integration
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+if (file.exists(file.path(path.to.03.output, "all_sobj.rds")) == FALSE){
+  all.s.obj <- list()
+
+  for (sample.id in all.2nd.run.samples){
+    print(sprintf("Working on sample %s", sample.id))
+    all.s.obj[[sample.id]]<- readRDS(file.path(path.to.02.output, sample.id, sprintf("GEX_sample_%s_seurat_object.rds", sample.id)))
+  }
+  
+
+  s.obj <- merge(x = all.s.obj[[1]], 
+                   y = unlist(all.s.obj[2:length(all.s.obj)]),
+                   merge.data = FALSE, 
+                   add.cell.ids = names(all.s.obj))
+
+  chosen.assay <- "RNA"
+  DefaultAssay(s.obj) <- chosen.assay
+  
+  s.obj <- NormalizeData(s.obj) # ---> use Log Normalized
+  s.obj <- FindVariableFeatures(s.obj, selection.method = "vst")
+  s.obj <- ScaleData(s.obj, features = rownames(s.obj))
+  
+  s.obj <- RunPCA(s.obj, npcs = num.PCA, verbose = FALSE, reduction.name=sprintf("%s_PCA", chosen.assay))
+  s.obj <- RunUMAP(s.obj, reduction = sprintf("%s_PCA", chosen.assay), dims = 1:num.PCA, 
+                             reduction.name=sprintf("%s_UMAP", chosen.assay), seed.use = chosen.seed)
+  s.obj <- RunTSNE(s.obj, reduction = sprintf("%s_PCA", chosen.assay), dims = 1:num.PCA, 
+                             reduction.name=sprintf("%s_TSNE", chosen.assay), seed.use = chosen.seed)
+  
+  s.obj <- FindNeighbors(s.obj, reduction = sprintf("%s_PCA", chosen.assay), dims = 1:num.PC.used.in.Clustering)
+  
+  s.obj <- FindClusters(s.obj, resolution = cluster.resolution, random.seed = chosen.seed)
+  
+  saveRDS(object = s.obj, file = file.path(path.to.03.output, "all_sobj.rds"))  
+  print("Finished saving the file")
+  write.csv(data.frame(data = c("finished saving the object to disk")), file.path(path.to.03.output, "CHECK_all_sobj.rds.csv"))
+} else {
+  s.obj <- readRDS(file.path(path.to.03.output, "all_sobj.rds"))
+}
+```
+
+
+# UMAP of all samples {.tabset}
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("## Sample: %s \n", sample.id))
+  p <- DimPlot(object = subset(s.obj, name == sample.id), reduction = "RNA_UMAP", label = TRUE, label.box = TRUE, label.size = 10, repel = TRUE) + 
+  ggtitle(sprintf("UMAP Sample %s: All clusters", sample.id)) +
+  theme(axis.text = element_text(size=20, face = "bold"),
+        axis.title = element_text(size=20, face = "bold"), 
+        title = element_text(size = 20, face = "bold"))
+  print(p)
+  cat("\n \n")
+}
+
+```
+
+# Before and After integration
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+if (file.exists(file.path(path.to.03.output, "all_sobj.integrated.rds")) == FALSE){
+  data.list <- SplitObject(s.obj, split.by = "name")
+  data.list <- lapply(X = data.list, FUN = function(x) {
+    x <- NormalizeData(x)
+    x <- FindVariableFeatures(x, selection.method = "vst", nfeatures = 2000)})
+  
+  k.filter <- 200
+  
+  anchors <- FindIntegrationAnchors(object.list = data.list, dims = 1:num.dim.integration, scale=F,
+                                    k.filter = k.filter) ## THIS IS CCA DIMENSIONS
+  
+  s.obj_inte <- IntegrateData(anchorset = anchors, dims = 1:num.dim.integration, k.weight = k.filter) ## THIS IS PCA DIMENSION
+  
+  ## keep the order of integration obj
+  s.obj_inte <- s.obj_inte[, colnames(s.obj)]
+  
+  s.obj[['integrated']] <- s.obj_inte[['integrated']]
+  
+  s.obj@commands <- c(s.obj@commands, s.obj_inte@commands)
+  
+  s.obj@tools <- c(s.obj@tools, s.obj_inte@tools)
+  
+  DefaultAssay(s.obj) <- "integrated"
+  
+  s.obj <- ScaleData(s.obj, verbose = FALSE, features = row.names(s.obj))
+  
+  s.obj <- RunPCA(s.obj, npcs = num.PCA, verbose = FALSE, reduction.name="INTE_PCA")
+  
+  s.obj <- RunUMAP(s.obj, reduction = "INTE_PCA", dims = 1:num.PCA, reduction.name="INTE_UMAP")
+  
+  # clustering 
+  s.obj <- FindNeighbors(s.obj, reduction = "INTE_PCA", dims = 1:num.dim.cluster)
+  
+  s.obj <- FindClusters(s.obj, resolution = cluster.resolution)
+  
+  saveRDS(object = s.obj, file = file.path(path.to.03.output, "all_sobj.integrated.rds"))
+  
+  print("Finished saving the file")
+  write.csv(data.frame(data = c("finished saving the object to disk")), file.path(path.to.03.output, "CHECK_all_sobj.integrated.rds.csv"))
+} else {
+  s.obj <- readRDS(file.path(path.to.03.output, "all_sobj.integrated.rds"))
+}
+```
+
+## Before integration
+
+## Integrate all samples and show them on UMAP
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = "RNA_UMAP", label = TRUE, group.by = "name", label.box = TRUE, label.size = 10, repel = TRUE) +
+  ggtitle("UMAP: all samples before performing data integration") + 
+  theme(axis.text = element_text(size=20, face = "bold"),
+        axis.title = element_text(size=20, face = "bold"), 
+        title = element_text(size = 20, face = "bold"))
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, group.by = "name", label.box = TRUE, label.size = 10, repel = TRUE) +
+  ggtitle("UMAP: all samples after performing data integration") + 
+  theme(axis.text = element_text(size=20, face = "bold"),
+        axis.title = element_text(size=20, face = "bold"), 
+        title = element_text(size = 20, face = "bold"))
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+DimPlot(object = s.obj, reduction = "INTE_UMAP", label = FALSE, split.by = "name", ncol = 3, label.box = TRUE, label.size = 10, repel = TRUE) +
+  ggtitle("UMAP: all samples after performing data integration") + 
+  theme(axis.text = element_text(size=20, face = "bold"),
+        axis.title = element_text(size=20, face = "bold"), 
+        title = element_text(size = 20, face = "bold"))
+```
+
+## Clustering after integration
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE, label.size = 10, repel = TRUE) +
+  ggtitle("UMAP: all samples after performing data integration") + 
+  theme(axis.text = element_text(size=20, face = "bold"),
+        axis.title = element_text(size=20, face = "bold"), 
+        title = element_text(size = 20, face = "bold"))
+```
+
+
+# Cluster markers of integrated dataset
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+
+if (file.exists(file.path(path.to.03.output, "integrated_cluster_markers.rds")) == FALSE){
+  integrated.cluster.markers <- FindAllMarkers(object = s.obj, assay = "RNA", test.use = "wilcox")
+  saveRDS(integrated.cluster.markers, file.path(path.to.03.output, "integrated_cluster_markers.rds"))   
+} else {
+  integrated.cluster.markers <- readRDS(file.path(path.to.03.output, "integrated_cluster_markers.rds"))
+}
+
+integrated.cluster.markers <- subset(integrated.cluster.markers, integrated.cluster.markers$p_val_adj <= 0.05 & integrated.cluster.markers$avg_log2FC > 0)
+```
+
+## Top-12 cluster marker genes `FeaturePlot` {.tabset}
+Here we just show the top-12 genes (ranked by `avg_log2FC`) for each cluster. 
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+for (cluster.id in sort(unique(s.obj@meta.data$seurat_clusters))){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(integrated.cluster.markers, integrated.cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- FeaturePlot(object = s.obj, reduction = "INTE_UMAP", features = head(tmp.cluster.markers, 9)$gene, ncol = 3, label = TRUE, pt.size = 0.5, label.size = 5, label.color = "red")  
+  print(p)
+  cat("\n \n")
+}
+```
+
+
+## Top-12 dot plot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+for (cluster.id in sort(unique(s.obj@meta.data$seurat_clusters))){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(integrated.cluster.markers, integrated.cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- DotPlot(object = s.obj, features = head(tmp.cluster.markers, 9)$gene)  
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Top-12 Violin plot {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
+for (cluster.id in sort(unique(s.obj@meta.data$seurat_clusters))){
+  DefaultAssay(s.obj) <- "RNA"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(integrated.cluster.markers, integrated.cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- VlnPlot(object = s.obj, features = head(tmp.cluster.markers, 9)$gene)  
+  print(p)
+  cat("\n \n")
+}
+```
+
+
+## Tables of all cluster marker genes {.tabset}
+```{r echo=FALSE, include=FALSE}
+integrated.cluster.markers %>% create_dt()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+
+for (cluster.id in sort(unique(integrated.cluster.markers$cluster))){
+  tmp.integrated.cluster.markers <- subset(integrated.cluster.markers, integrated.cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  tmp.integrated.cluster.markers <- tmp.integrated.cluster.markers %>% mutate_if(is.numeric, round, 6) 
+  
+  cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.integrated.cluster.markers, extensions = 'Buttons',
+                filter = "top",
+                options = list(dom = 'Blfrtip',
+                               buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                               lengthMenu = list(c(10,25,50,-1),
+                                                 c(10,25,50,"All")),
+                               columnDefs = list(list(
+                                 targets = "_all",
+                                 render = JS(
+                                   "function(data, type, row, meta) {",
+                                   "return type === 'display' && data != null && data.length > 100 ?",
+                                   "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                   "}")
+                               ))
+                ))))
+  cat("\n \n")
+}
+
+```
+
+# Number of cells in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster <- s.obj@meta.data %>% subset(select = c(name, seurat_clusters)) %>% table() %>% as.data.frame()
+count.cell.in.cluster.wider <- count.cell.in.cluster %>% pivot_wider(names_from = "name", values_from = "Freq") 
+
+pct.table <- count.cell.in.cluster.wider %>% column_to_rownames("seurat_clusters")
+colsum.table <- colSums(pct.table)
+rowsum.table <- rowSums(pct.table)
+names(rowsum.table) <- to_vec(for (item in names(rowsum.table)) sprintf("cluster_%s", item))
+
+pct.table.sample <- pct.table # distribution of cells from each cluster in each sample
+pct.table.cluster <- pct.table %>% t() %>% as.data.frame() # distribution of cell from each sample in each cluster
+colnames(pct.table.cluster) <- to_vec(for (item in colnames(pct.table.cluster)) sprintf("cluster_%s", item))
+
+for (sample.id in colnames(pct.table.sample)){
+  pct.table.sample[[sample.id]] <- to_vec( for(item in pct.table.sample[[sample.id]]) item/colsum.table[[sample.id]])
+}
+
+for (cluster.id in colnames(pct.table.cluster)){
+  pct.table.cluster[[cluster.id]] <- to_vec( for(item in pct.table.cluster[[cluster.id]]) item/rowsum.table[[cluster.id]])
+}
+```
+
+## Table
+### Raw counts 
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster.wider %>% create_dt()
+```
+
+### Percentage in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+### Percentage in each sample
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+## Barplot
+
+### Raw counts
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = seurat_clusters, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = name, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+### Percentages
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.sample.longer <- pct.table.sample %>% rownames_to_column("seurat_clusters") %>% 
+  pivot_longer(!seurat_clusters, names_to = "name", values_to = "Freq")
+pct.table.sample.longer$seurat_clusters <- factor(pct.table.sample.longer$seurat_clusters, levels = seq(0, length(unique(pct.table.sample.longer$seurat_clusters)) - 1))
+p <- pct.table.sample.longer  %>% 
+  ggplot(aes(x = name, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster.longer <- pct.table.cluster %>% rownames_to_column("name") %>% 
+  pivot_longer(!name, names_to = "seurat_clusters", values_to = "Freq")
+
+p <- pct.table.cluster.longer  %>% 
+  ggplot(aes(x = seurat_clusters, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+
+# Number of hashtag in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster <- s.obj@meta.data %>% subset(select = c(HTO_classification, seurat_clusters)) %>% table() %>% as.data.frame()
+count.cell.in.cluster.wider <- count.cell.in.cluster %>% pivot_wider(names_from = "HTO_classification", values_from = "Freq") 
+
+pct.table <- count.cell.in.cluster.wider %>% column_to_rownames("seurat_clusters")
+colsum.table <- colSums(pct.table)
+rowsum.table <- rowSums(pct.table)
+names(rowsum.table) <- to_vec(for (item in names(rowsum.table)) sprintf("cluster_%s", item))
+
+pct.table.sample <- pct.table # distribution of cells from each cluster in each sample
+pct.table.cluster <- pct.table %>% t() %>% as.data.frame() # distribution of cell from each sample in each cluster
+colnames(pct.table.cluster) <- to_vec(for (item in colnames(pct.table.cluster)) sprintf("cluster_%s", item))
+
+for (sample.id in colnames(pct.table.sample)){
+  pct.table.sample[[sample.id]] <- to_vec( for(item in pct.table.sample[[sample.id]]) item/colsum.table[[sample.id]])
+}
+
+for (cluster.id in colnames(pct.table.cluster)){
+  pct.table.cluster[[cluster.id]] <- to_vec( for(item in pct.table.cluster[[cluster.id]]) item/rowsum.table[[cluster.id]])
+}
+```
+
+## Table
+### Raw counts 
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster.wider %>% create_dt()
+```
+
+### Percentage in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+### Percentage in each sample
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+## Barplot
+
+### Raw counts
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = seurat_clusters, y = Freq, fill = HTO_classification)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = HTO_classification, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+### Percentages
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.sample.longer <- pct.table.sample %>% rownames_to_column("seurat_clusters") %>% 
+  pivot_longer(!seurat_clusters, names_to = "name", values_to = "Freq")
+pct.table.sample.longer$seurat_clusters <- factor(pct.table.sample.longer$seurat_clusters, levels = seq(0, length(unique(pct.table.sample.longer$seurat_clusters)) - 1))
+p <- pct.table.sample.longer  %>% 
+  ggplot(aes(x = name, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster.longer <- pct.table.cluster %>% rownames_to_column("name") %>% 
+  pivot_longer(!name, names_to = "seurat_clusters", values_to = "Freq")
+
+p <- pct.table.cluster.longer  %>% 
+  ggplot(aes(x = seurat_clusters, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+# Number of sample-hashtag in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+meta.data <- s.obj@meta.data %>% subset(select = c(seurat_clusters, name, HTO_classification)) %>%
+  rowwise() %>%
+  mutate(name_ht = sprintf("%s_%s", name, str_split(HTO_classification, "-")[[1]][[1]]))
+
+count.cell.in.cluster <- meta.data %>% subset(select = c(name_ht, seurat_clusters)) %>% table() %>% as.data.frame()
+count.cell.in.cluster.wider <- count.cell.in.cluster %>% pivot_wider(names_from = "name_ht", values_from = "Freq") 
+
+pct.table <- count.cell.in.cluster.wider %>% column_to_rownames("seurat_clusters")
+colsum.table <- colSums(pct.table)
+rowsum.table <- rowSums(pct.table)
+names(rowsum.table) <- to_vec(for (item in names(rowsum.table)) sprintf("cluster_%s", item))
+
+pct.table.sample <- pct.table # distribution of cells from each cluster in each sample
+pct.table.cluster <- pct.table %>% t() %>% as.data.frame() # distribution of cell from each sample in each cluster
+colnames(pct.table.cluster) <- to_vec(for (item in colnames(pct.table.cluster)) sprintf("cluster_%s", item))
+
+for (sample.id in colnames(pct.table.sample)){
+  pct.table.sample[[sample.id]] <- to_vec( for(item in pct.table.sample[[sample.id]]) item/colsum.table[[sample.id]])
+}
+
+for (cluster.id in colnames(pct.table.cluster)){
+  pct.table.cluster[[cluster.id]] <- to_vec( for(item in pct.table.cluster[[cluster.id]]) item/rowsum.table[[cluster.id]])
+}
+```
+
+## Table
+### Raw counts 
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster.wider %>% create_dt()
+```
+
+### Percentage in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+### Percentage in each sample
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+## Barplot
+
+### Raw counts
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = seurat_clusters, y = Freq, fill = name_ht)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = name_ht, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggplotly(p)
+```
+
+### Percentages
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.sample.longer <- pct.table.sample %>% rownames_to_column("seurat_clusters") %>% 
+  pivot_longer(!seurat_clusters, names_to = "name", values_to = "Freq")
+pct.table.sample.longer$seurat_clusters <- factor(pct.table.sample.longer$seurat_clusters, levels = seq(0, length(unique(pct.table.sample.longer$seurat_clusters)) - 1))
+p <- pct.table.sample.longer  %>% 
+  ggplot(aes(x = name, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggplotly(p)
+```
+
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster.longer <- pct.table.cluster %>% rownames_to_column("name") %>% 
+  pivot_longer(!name, names_to = "seurat_clusters", values_to = "Freq")
+
+p <- pct.table.cluster.longer  %>% 
+  ggplot(aes(x = seurat_clusters, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack") 
+ggplotly(p)
+```
+

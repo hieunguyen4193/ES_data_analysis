@@ -1,0 +1,165 @@
+gc()
+rm(list = ls())
+
+my_random_seed <- 42
+set.seed(my_random_seed)
+
+# __________VDJ DATA ANYLYSIS PIPELINE__________
+PROJECT <- "EStange_20240411"
+version.name <- "SeuratV5"
+
+PROJECT.with.version <- sprintf("%s_%s", PROJECT, version.name)
+
+source("/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_VDJ_pipeline/main_VDJ_pipeline.R")
+
+outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
+
+path.to.storage <- "/media/hieunguyen/HD0/storage"
+path.to.main.input <- file.path(path.to.storage, "EStange", PROJECT)
+
+path.to.main.output <- file.path(outdir, PROJECT.with.version)
+dir.create(path.to.main.output, showWarnings = FALSE, recursive = TRUE)
+
+path.to.VDJ.input <- file.path(path.to.main.input, "VDJ")
+path.to.VDJ.output <- file.path(path.to.main.output, "VDJ_output")
+dir.create(path.to.VDJ.output, showWarnings = FALSE, recursive = TRUE)
+
+path.to.pipeline.src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5"
+path2src <- file.path(path.to.pipeline.src, "processes_src")
+
+source(file.path(path2src, "import_libraries.R"))
+source(file.path(path.to.pipeline.src, "scRNA_GEX_pipeline.R"))
+
+summarize_vdj_data(path.to.input = path.to.VDJ.input, 
+                   path.to.output = path.to.VDJ.output, 
+                   PROJECT = PROJECT, 
+                   removeNA=FALSE, 
+                   removeMulti=FALSE, T_or_B = "T")
+
+# __________GEX DATA ANALYSIS PIPELINE__________
+
+for (analysis.round in c("1st")){
+  
+  path2input <- file.path(path.to.main.input, "GEX")
+  
+  path.to.VDJ.output <- file.path(path.to.main.output, "VDJ_output")
+  
+  # _____stage lst for single sample_____
+  stage_lst <- hash()
+  
+  stage_lst[["d10_SPF"]] <- c(d10_SPF = "d10_SPF")
+  stage_lst[["SC5"]] <- c(SC5 = "SC5")
+  
+  MINCELLS  <- 50
+  MINGENES  <- 5
+  
+  save.RDS <- list(s1 = TRUE,
+                   s2 = TRUE,
+                   s3 = TRUE,
+                   s4 = TRUE,
+                   s5 = TRUE,
+                   s6 = TRUE,
+                   s7 = TRUE,
+                   s8 = TRUE,
+                   s8a = TRUE,
+                   s9 = FALSE)
+  
+  sw <- list(s1 = "on",
+             s2 = "on",
+             s3 = "on",
+             s4 = "on",
+             s5 = "on",
+             s6 = "on",
+             s7 = "on",
+             s8 = "off",
+             s8a = "on",
+             s9 = "off")
+  
+  rerun <- list(s1 = FALSE, 
+                s2 = FALSE,
+                s3 = FALSE,
+                s4 = FALSE,
+                s5 = FALSE,
+                s6 = FALSE,
+                s7 = FALSE,
+                s8 = FALSE,
+                s8a = FALSE,
+                s9 = FALSE)
+  
+  filter.thresholds <- list(nFeatureRNAfloor = NULL,
+                            nFeatureRNAceiling = NULL,
+                            nCountRNAfloor = NULL, 
+                            nCountRNAceiling = NULL,
+                            pct_mitofloor = NULL, 
+                            pct_mitoceiling = 5,
+                            pct_ribofloor = NULL, 
+                            pct_riboceiling = NULL,
+                            ambientRNA_thres = 0.5,
+                            log10GenesPerUMI_thres = NULL)
+  
+  remove_doublet <- FALSE
+  path.to.10X.doublet.estimation <- file.path(path.to.storage, "DoubletEstimation10X.csv"
+  )  
+  #####--------------------------------------------------------------------#####
+  ##### IMPORTANT INPUT PARAMS
+  #####--------------------------------------------------------------------#####
+  num.PCA <- 25
+  num.PC.used.in.UMAP <- 25
+  num.PC.used.in.Clustering <- 25
+  regressOut_mode <- NULL
+  features_to_regressOut <- NULL
+  use.sctransform <- TRUE
+  vars.to.regress <- c("percent.mt")
+  
+  for (sample in names(stage_lst)){
+    # for (sample in c("SC5")){
+    print(sprintf("Working on sample %s", sample))
+    path.to.output <- file.path(path.to.main.output, sprintf("%s_round", analysis.round))
+    dir.create(path.to.output, showWarnings = FALSE)
+    if (sample == "SC5"){
+      path.to.anno.contigs <- NULL
+      path.to.count.clonaltype <- NULL
+      filtered.barcodes <- NULL
+      path.to.s3a <- NULL
+      input.method <- "normal"
+    } else {
+      path.to.anno.contigs <- file.path(path.to.VDJ.output, sprintf("annotated_contigs_clonaltype_%s.csv", sample))
+      path.to.count.clonaltype <- file.path(path.to.VDJ.output, sprintf("count_clonaltype_%s.csv", sample))
+      filtered.barcodes <- NULL
+      path.to.s3a <- NULL
+      input.method <- "normal_with_hashtag_antibodies"
+    }
+    s.obj <- run_pipeline_GEX(path2src=path2src,
+                              path2input=file.path(path2input),
+                              path.to.logfile.dir=file.path(path.to.output, sprintf("%s_%s_round", sample, analysis.round), "logs"),
+                              stage_lst=stage_lst[[sample]],
+                              path.to.10X.doublet.estimation=path.to.10X.doublet.estimation,
+                              MINCELLS=MINCELLS,
+                              MINGENES=MINGENES,
+                              PROJECT=PROJECT.with.version,
+                              remove_doublet=remove_doublet,
+                              save.RDS=save.RDS,
+                              path.to.output=file.path(path.to.output, sprintf("%s_%s_round", sample, analysis.round)),
+                              rerun=rerun,
+                              DE.test="wilcox",
+                              num.PCA=num.PCA,
+                              num.PC.used.in.UMAP=num.PC.used.in.UMAP,
+                              num.PC.used.in.Clustering=num.PC.used.in.Clustering,
+                              use.sctransform=use.sctransform,
+                              filtered.barcodes=filtered.barcodes,
+                              filter.thresholds=filter.thresholds,
+                              path.to.anno.contigs=path.to.anno.contigs,
+                              path.to.count.clonaltype=path.to.count.clonaltype,
+                              input.method = input.method,
+                              my_random_seed = my_random_seed,
+                              with.VDJ = TRUE, 
+                              path.to.s3a.source = path.to.s3a, 
+                              regressOut_mode = regressOut_mode,
+                              features_to_regressOut = features_to_regressOut,
+                              sw = sw,
+                              vars.to.regress = vars.to.regress)
+  }
+}
+#### ALWAYS REMEMBER TO SAVE SESSIONINFO !!!!!!
+writeLines(capture.output(sessionInfo()), file.path(path.to.output, sprintf("%s_sessionInfo.txt", PROJECT)))
+

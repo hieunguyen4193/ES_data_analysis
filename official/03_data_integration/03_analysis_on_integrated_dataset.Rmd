@@ -1,0 +1,551 @@
+---
+title: "Analysis on the integrated dataset, case: `r params$input.case`"
+author:
+  - "trnguyen@ukaachen.de"
+date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    keep_md: no
+    df_print: paged
+    toc: true
+    toc_float:
+      toc_collapsed: false
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
+params:
+  input.case: NA
+---
+
+
+```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+ $(document).ready(function() {
+    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+    // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+<style type="text/css">
+    div.datatables { height: auto !important;}
+</style>
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
+#####----------------------------------------------------------------------#####
+#
+# trnguyen@ukaachen.de
+#
+#####----------------------------------------------------------------------#####
+
+##### clean up #####
+# gc()
+# rm(list = ls())
+
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
+source(file.path(scrna_pipeline_src, "import_libraries.R"))
+source(file.path(scrna_pipeline_src, "helper_functions.R"))
+source(file.path(scrna_pipeline_src, "s8_integration_and_clustering.R"))
+#####----------------------------------------------------------------------#####
+# CONFIGURATIONS 
+#####----------------------------------------------------------------------#####
+analysis.round <- "1st"
+chosen.seed <- 42
+num.dim.integration <- 25 
+num.PCA <- 25
+num.dim.cluster <- 25
+num.PC.used.in.Clustering <- 25
+num.PC.used.in.UMAP <- 25
+my_random_seed <- 42
+
+#####----------------------------------------------------------------------#####
+##### input arguments
+#####----------------------------------------------------------------------#####
+# input.case <- parmas$input.case
+
+# input.case <- "remove_d4_LPS"
+# input.case <- "all.samples"
+# input.case <- "remove_d4_LPS_SC5"
+input.case <- params$input.case
+
+PROJECT <- "EStange_20240411_SeuratV5"
+outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
+
+path.to.main.input <- file.path(outdir, PROJECT)
+path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+
+path.to.01.output <- file.path(path.to.main.output, "01_output")
+path.to.03.output <- file.path(path.to.main.output, "03_output", input.case)
+dir.create(path.to.03.output, showWarnings = FALSE, recursive = TRUE)
+
+path.to.s.obj <- file.path(path.to.03.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT))
+s.obj <- readRDS(path.to.s.obj)
+```
+
+# UMAP
+## All samples
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, group.by = "cca.cluster.0.5")
+```
+
+# Cluster marker genes
+
+Identify differentially expressed genes in each cluster. 
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.height=10, fig.width=18}
+Idents(s.obj) <- "cca.cluster.0.5"
+if (file.exists(file.path(path.to.03.output, "DE_cluster_marker_genes.rds")) == FALSE){
+  DefaultAssay(s.obj) <- "SCT"
+  s.obj <- PrepSCTFindMarkers(s.obj)
+  cluster.markers <- FindAllMarkers(object = s.obj, assay = "SCT", test.use = "wilcox", slot = "data", min.pct = 0.5)
+  cluster.markers <- subset(cluster.markers, cluster.markers$p_val_adj < 0.05 & cluster.markers$avg_log2FC > 0)
+  saveRDS(cluster.markers, file.path(path.to.03.output, "DE_cluster_marker_genes.rds"))
+} else {
+  cluster.markers <- readRDS(file.path(path.to.03.output, "DE_cluster_marker_genes.rds"))
+}
+```
+
+## Feature plot {.tabset}
+```{r echo=FALSE, fig.height=12, fig.width=20, message=FALSE, warning=FALSE, results='asis'}
+for (cluster.id in sort(unique(cluster.markers$cluster))){
+  DefaultAssay(s.obj) <- "SCT"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- FeaturePlot(object = s.obj, reduction = "cca_UMAP", features = head(tmp.cluster.markers, 9)$gene, ncol = 3, label = TRUE, pt.size = 0.5, label.size = 5, label.color = "red", slot = "data")  
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Dot plot{.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+for (cluster.id in sort(unique(cluster.markers$cluster))){
+  DefaultAssay(s.obj) <- "SCT"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- DotPlot(object = s.obj, features = head(tmp.cluster.markers, 9)$gene)  
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Violin plot{.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+for (cluster.id in sort(unique(cluster.markers$cluster))){
+  DefaultAssay(s.obj) <- "SCT"
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  tmp.cluster.markers <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  p <- VlnPlot(object = s.obj, features = head(tmp.cluster.markers, 9)$gene, slot = "data")  
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Full tables of DE genes {.tabset}
+```{r echo=FALSE, results='asis', include=FALSE}
+cluster.markers %>% create_dt()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+all.cluster.ids <- sort(unique(s.obj$cca.cluster.0.5))
+for (cluster.id in all.cluster.ids){
+  tmp.table <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.table, extensions = 'Buttons',
+                                      filter = "top",
+                                      options = list(dom = 'Blfrtip',
+                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                     lengthMenu = list(c(10,25,50,-1),
+                                                                       c(10,25,50,"All")),
+                                                     columnDefs = list(list(
+                                                       targets = "_all",
+                                                       render = JS(
+                                                         "function(data, type, row, meta) {",
+                                                         "return type === 'display' && data != null && data.length > 100 ?",
+                                                         "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                                         "}")
+                                                     ))
+                                      ))))
+  cat("\n \n")  
+}
+```
+
+
+# Number of cells in each cluster in each sample
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+cell.count.in.clusters <- table(s.obj$name, s.obj$cca.cluster.0.5) %>% as.data.frame() %>%
+  pivot_wider(names_from = "Var2", values_from = "Freq") 
+cell.count.in.clusters %>% create_dt()
+```
+
+# Cell type annotation by pathway analysis with CellMarkers 2.0
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+if (packageVersion("clusterProfiler") != "4.10.1"){
+  remove.packages("clusterProfiler")
+  remove.packages("DOSE")
+  remove.packages("GOSemSim")
+  path.to.install.dir <- "/media/hieunguyen/HD0/storage/offline_pkgs/clusterProfiler"
+  install.packages(file.path(path.to.install.dir, "HDO.db_0.99.1.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "yulab.utils_0.1.4.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "GOSemSim_2.28.1.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "DOSE_3.28.2.tar.gz"), type = "source", repos = NULL) 
+  install.packages(file.path(path.to.install.dir, "gson_0.1.0.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "clusterProfiler_4.10.1.tar.gz"), type = "source", repos = NULL) 
+}
+
+library(clusterProfiler)
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+if ("org.Mm.eg.db" %in% installed.packages() == FALSE){
+  BiocManager::install("org.Mm.eg.db")
+}
+library("org.Mm.eg.db")
+
+annotate_with_pathway <- function(cluster.id, topN = 20){
+  if (topN == "all"){
+      tmpdf <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC))
+  } else {
+      tmpdf <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC)) %>% head(topN)    
+  }
+
+  path.to.cellmarker2.0 <- "/media/hieunguyen/HD0/storage/CellMarker2.0"
+  cell_marker_data <- readxl::read_excel(file.path(path.to.cellmarker2.0, "Cell_marker_Mouse.xlsx"))
+  
+  ## instead of `cellName`, users can use other features (e.g. `cancerType`)
+  cells <- cell_marker_data %>%
+      dplyr::select(cell_name, GeneID) %>%
+      dplyr::mutate(GeneID = strsplit(GeneID, ', ')) %>%
+      tidyr::unnest()
+  
+  convertdf <- bitr(tmpdf$gene, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
+      
+  x <- enricher(convertdf$ENTREZID, TERM2GENE = cells) %>% 
+    as.data.frame() %>%
+    subset(p.adjust <= 0.05)
+  x <- x %>% subset(select = -c(geneID)) %>% arrange(desc(Count))
+  return(x)  
+}
+
+pathway.annotation <- hash()
+```
+
+## Result tables {.tabset}
+```{r echo=FALSE, results='asis', include=FALSE}
+annotate_with_pathway(1) %>% create_dt()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+annotationdf <- data.frame()
+top5.annotationdf <- data.frame()
+
+available.diff.clusters <- unique(cluster.markers$cluster)
+
+for (cluster.id in all.cluster.ids){
+  if (cluster.id %in% available.diff.clusters == FALSE){
+    tmp.table <- data.frame(status = c("Cell type not detected!"))
+  } else {
+      tmp.table <- annotate_with_pathway(cluster.id)
+  }
+
+  if (nrow(tmp.table) == 0 | "status" %in% colnames(tmp.table)){
+    tmp.table <- data.frame(status = c("Cell type not detected!"))
+  } else {
+      tmpdf <- data.frame(cluster.id = c(cluster.id), annotation = c(head(tmp.table, 1)$ID))
+      annotationdf <- rbind(annotationdf, tmpdf)
+      
+      tmpdf <- data.frame(cluster.id = c(cluster.id), annotation = c(paste(head(tmp.table, 5)$ID, collapse = ", ")))
+      top5.annotationdf <- rbind(top5.annotationdf, tmpdf)
+    
+  }
+  
+  cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))
+  print( htmltools::tagList(datatable(tmp.table, extensions = 'Buttons',
+                                      filter = "top",
+                                      options = list(dom = 'Blfrtip',
+                                                     buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                                                     lengthMenu = list(c(10,25,50,-1),
+                                                                       c(10,25,50,"All")),
+                                                     columnDefs = list(list(
+                                                       targets = "_all",
+                                                       render = JS(
+                                                         "function(data, type, row, meta) {",
+                                                         "return type === 'display' && data != null && data.length > 100 ?",
+                                                         "'<span title=\"' + data + '\">' + data.substr(0, 100) + '...</span>' : data;",
+                                                         "}")
+                                                     ))
+                                      ))))
+  cat("\n \n")  
+}
+```
+
+## Top-1 annotation for each cluster
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+annotationdf %>% create_dt()
+```
+
+## Top-5 annotation for each clusters
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+top5.annotationdf %>% create_dt()
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
+  rowwise() %>%
+  mutate(prediction2 = ifelse(nrow(subset(annotationdf, annotationdf$cluster.id == cca.cluster.0.5)) != 0, 
+                              subset(annotationdf, annotationdf$cluster.id == cca.cluster.0.5)$annotation,
+                              "None")) %>%
+  column_to_rownames("barcode")
+meta.data <- meta.data[row.names(s.obj@meta.data),]
+s.obj <- AddMetaData(s.obj, metadata = meta.data$prediction2, col.name = "prediction2")
+
+DimPlot(object = s.obj, reduction = "cca_UMAP", label.box = TRUE, label = TRUE, repel = TRUE, group.by = "prediction2")
+```
+
+## Number of cells in each annotated cluster (top-1 annotation)
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+table(s.obj$prediction2, s.obj$name) %>% as.data.frame() %>% pivot_wider(names_from = "Var1", values_from = "Freq") %>% create_dt()
+```
+
+# Number of cells in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster <- s.obj@meta.data %>% subset(select = c(name, cca.cluster.0.5)) %>% table() %>% as.data.frame()
+count.cell.in.cluster.wider <- count.cell.in.cluster %>% pivot_wider(names_from = "name", values_from = "Freq") 
+
+pct.table <- count.cell.in.cluster.wider %>% column_to_rownames("cca.cluster.0.5")
+colsum.table <- colSums(pct.table)
+rowsum.table <- rowSums(pct.table)
+names(rowsum.table) <- to_vec(for (item in names(rowsum.table)) sprintf("cluster_%s", item))
+
+pct.table.sample <- pct.table # distribution of cells from each cluster in each sample
+pct.table.cluster <- pct.table %>% t() %>% as.data.frame() # distribution of cell from each sample in each cluster
+colnames(pct.table.cluster) <- to_vec(for (item in colnames(pct.table.cluster)) sprintf("cluster_%s", item))
+
+for (sample.id in colnames(pct.table.sample)){
+  pct.table.sample[[sample.id]] <- to_vec( for(item in pct.table.sample[[sample.id]]) item/colsum.table[[sample.id]])
+}
+
+for (cluster.id in colnames(pct.table.cluster)){
+  pct.table.cluster[[cluster.id]] <- to_vec( for(item in pct.table.cluster[[cluster.id]]) item/rowsum.table[[cluster.id]])
+}
+```
+
+## Table
+### Raw counts 
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster.wider %>% create_dt()
+```
+
+### Percentage in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+### Percentage in each sample
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+## Barplot
+
+### Raw counts
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = cca.cluster.0.5, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = name, y = Freq, fill = cca.cluster.0.5)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+### Percentages
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.sample.longer <- pct.table.sample %>% rownames_to_column("cca.cluster.0.5") %>% 
+  pivot_longer(!cca.cluster.0.5, names_to = "name", values_to = "Freq")
+pct.table.sample.longer$cca.cluster.0.5 <- factor(pct.table.sample.longer$cca.cluster.0.5, levels = seq(0, length(unique(pct.table.sample.longer$cca.cluster.0.5)) - 1))
+p <- pct.table.sample.longer  %>% 
+  ggplot(aes(x = name, y = Freq, fill = cca.cluster.0.5)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster.longer <- pct.table.cluster %>% rownames_to_column("name") %>% 
+  pivot_longer(!name, names_to = "cca.cluster.0.5", values_to = "Freq")
+
+p <- pct.table.cluster.longer  %>% 
+  ggplot(aes(x = cca.cluster.0.5, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+
+# Number of hashtag in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster <- s.obj@meta.data %>% subset(select = c(HTO_classification, cca.cluster.0.5)) %>% table() %>% as.data.frame()
+count.cell.in.cluster.wider <- count.cell.in.cluster %>% pivot_wider(names_from = "HTO_classification", values_from = "Freq") 
+
+pct.table <- count.cell.in.cluster.wider %>% column_to_rownames("cca.cluster.0.5")
+colsum.table <- colSums(pct.table)
+rowsum.table <- rowSums(pct.table)
+names(rowsum.table) <- to_vec(for (item in names(rowsum.table)) sprintf("cluster_%s", item))
+
+pct.table.sample <- pct.table # distribution of cells from each cluster in each sample
+pct.table.cluster <- pct.table %>% t() %>% as.data.frame() # distribution of cell from each sample in each cluster
+colnames(pct.table.cluster) <- to_vec(for (item in colnames(pct.table.cluster)) sprintf("cluster_%s", item))
+
+for (sample.id in colnames(pct.table.sample)){
+  pct.table.sample[[sample.id]] <- to_vec( for(item in pct.table.sample[[sample.id]]) item/colsum.table[[sample.id]])
+}
+
+for (cluster.id in colnames(pct.table.cluster)){
+  pct.table.cluster[[cluster.id]] <- to_vec( for(item in pct.table.cluster[[cluster.id]]) item/rowsum.table[[cluster.id]])
+}
+```
+
+## Table
+### Raw counts 
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster.wider %>% create_dt()
+```
+
+### Percentage in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+### Percentage in each sample
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+## Barplot
+
+### Raw counts
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = cca.cluster.0.5, y = Freq, fill = HTO_classification)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = HTO_classification, y = Freq, fill = cca.cluster.0.5)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+### Percentages
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.sample.longer <- pct.table.sample %>% rownames_to_column("cca.cluster.0.5") %>% 
+  pivot_longer(!cca.cluster.0.5, names_to = "name", values_to = "Freq")
+pct.table.sample.longer$cca.cluster.0.5 <- factor(pct.table.sample.longer$cca.cluster.0.5, levels = seq(0, length(unique(pct.table.sample.longer$cca.cluster.0.5)) - 1))
+p <- pct.table.sample.longer  %>% 
+  ggplot(aes(x = name, y = Freq, fill = cca.cluster.0.5)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster.longer <- pct.table.cluster %>% rownames_to_column("name") %>% 
+  pivot_longer(!name, names_to = "cca.cluster.0.5", values_to = "Freq")
+
+p <- pct.table.cluster.longer  %>% 
+  ggplot(aes(x = cca.cluster.0.5, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+# Number of sample-hashtag in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+meta.data <- s.obj@meta.data %>% subset(select = c(cca.cluster.0.5, name, HTO_classification)) %>%
+  rowwise() %>%
+  mutate(name_ht = sprintf("%s_%s", name, str_split(HTO_classification, "-")[[1]][[1]]))
+
+count.cell.in.cluster <- meta.data %>% subset(select = c(name_ht, cca.cluster.0.5)) %>% table() %>% as.data.frame()
+count.cell.in.cluster.wider <- count.cell.in.cluster %>% pivot_wider(names_from = "name_ht", values_from = "Freq") 
+
+pct.table <- count.cell.in.cluster.wider %>% column_to_rownames("cca.cluster.0.5")
+colsum.table <- colSums(pct.table)
+rowsum.table <- rowSums(pct.table)
+names(rowsum.table) <- to_vec(for (item in names(rowsum.table)) sprintf("cluster_%s", item))
+
+pct.table.sample <- pct.table # distribution of cells from each cluster in each sample
+pct.table.cluster <- pct.table %>% t() %>% as.data.frame() # distribution of cell from each sample in each cluster
+colnames(pct.table.cluster) <- to_vec(for (item in colnames(pct.table.cluster)) sprintf("cluster_%s", item))
+
+for (sample.id in colnames(pct.table.sample)){
+  pct.table.sample[[sample.id]] <- to_vec( for(item in pct.table.sample[[sample.id]]) item/colsum.table[[sample.id]])
+}
+
+for (cluster.id in colnames(pct.table.cluster)){
+  pct.table.cluster[[cluster.id]] <- to_vec( for(item in pct.table.cluster[[cluster.id]]) item/rowsum.table[[cluster.id]])
+}
+```
+
+## Table
+### Raw counts 
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+count.cell.in.cluster.wider %>% create_dt()
+```
+
+### Percentage in each cluster
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+### Percentage in each sample
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster %>% create_dt()
+```
+
+## Barplot
+
+### Raw counts
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = cca.cluster.0.5, y = Freq, fill = name_ht)) + geom_bar(stat = "identity", dodge = "stack")
+ggplotly(p)
+```
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+p <- count.cell.in.cluster %>% ggplot(aes(x = name_ht, y = Freq, fill = cca.cluster.0.5)) + geom_bar(stat = "identity", dodge = "stack") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggplotly(p)
+```
+
+### Percentages
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.sample.longer <- pct.table.sample %>% rownames_to_column("cca.cluster.0.5") %>% 
+  pivot_longer(!cca.cluster.0.5, names_to = "name", values_to = "Freq")
+pct.table.sample.longer$cca.cluster.0.5 <- factor(pct.table.sample.longer$cca.cluster.0.5, levels = seq(0, length(unique(pct.table.sample.longer$cca.cluster.0.5)) - 1))
+p <- pct.table.sample.longer  %>% 
+  ggplot(aes(x = name, y = Freq, fill = cca.cluster.0.5)) + geom_bar(stat = "identity", dodge = "stack") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+ggplotly(p)
+```
+
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+pct.table.cluster.longer <- pct.table.cluster %>% rownames_to_column("name") %>% 
+  pivot_longer(!name, names_to = "cca.cluster.0.5", values_to = "Freq")
+
+p <- pct.table.cluster.longer  %>% 
+  ggplot(aes(x = cca.cluster.0.5, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack") 
+ggplotly(p)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+```
+

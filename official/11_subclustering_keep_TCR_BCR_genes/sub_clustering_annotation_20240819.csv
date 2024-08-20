@@ -1,0 +1,24 @@
+Cluster No.,Annotation,reclustering
+0,activated T cells,T cells
+1,Naïve T cells ,T cells
+2,mature B cell,B cells
+3,Immature neutrophils,myeloid
+4,ILC/NK cells,T cells
+5,pre B cells,B cells
+6,NKT cells,T cells
+7,naïve  T cells,T cells
+8,monocytes/monocyte derived macrophages,myeloid
+9,Mature neutrophils,myeloid
+10,Treg,T cells
+11,Dividing T cells,T cells
+12,anergic T cells,T cells
+13,pDC,myeloid
+14,GMP,myeloid
+15,pro B cells,B cells
+16,dendritic cells,myeloid
+17,Kupffer cells,myeloid
+18,preapoptotic T cells,T cells
+19,basophils,myeloid
+20,circulating neutrophils,myeloid
+21,erythroids,myeloid
+22,atypical B cells,B cells
