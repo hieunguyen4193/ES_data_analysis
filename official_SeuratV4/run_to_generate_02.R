@@ -34,6 +34,20 @@ all.samples <- c("adult_GF",
                  "d7_GF", 
                  "SC5")
 
+##### install clusterProfiler
+if ("clusterProfiler" %in% installed.packages() == FALSE){
+  remove.packages("clusterProfiler")
+  remove.packages("DOSE")
+  remove.packages("GOSemSim")
+  path.to.install.dir <- "/media/hieunguyen/HD01/storage/offline_pkgs/clusterProfiler"
+  install.packages(file.path(path.to.install.dir, "HDO.db_0.99.1.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "yulab.utils_0.1.4.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "GOSemSim_2.28.1.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "DOSE_3.28.2.tar.gz"), type = "source", repos = NULL) 
+  install.packages(file.path(path.to.install.dir, "gson_0.1.0.tar.gz"), type = "source", repos = NULL)
+  install.packages(file.path(path.to.install.dir, "clusterProfiler_4.10.1.tar.gz"), type = "source", repos = NULL) 
+}
+
 for (sample.id in all.samples){
   if (sample.id == "SC11"){
     path.to.rmd <- file.path(path.to.main.src, "02_preliminary_analysis", "02_GEX_preliminary_data_analysis.SC11.Rmd")
