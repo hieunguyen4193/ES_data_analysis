@@ -69,8 +69,6 @@ dir.create(path.to.01.output, showWarnings = FALSE, recursive = TRUE)
 path.to.before.filter.sobj <- file.path(path.to.main.input, sprintf("%s_1st_round/s1_output", sample.id), sprintf("%s.output.s1.rds", PROJECT))
 
 before.filter.s.obj <- readRDS(path.to.before.filter.sobj)
-
-
 ```
 
 
