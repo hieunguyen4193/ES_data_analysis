@@ -543,7 +543,7 @@ annotate_with_pathway <- function(cluster.id, topN = 20){
       tmpdf <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC)) %>% head(topN)    
   }
 
-  path.to.cellmarker2.0 <- "/media/hieunguyen/HD0/storage/CellMarker2.0"
+  path.to.cellmarker2.0 <- "/media/hieunguyen/HD01/storage/CellMarker2.0"
   cell_marker_data <- readxl::read_excel(file.path(path.to.cellmarker2.0, "Cell_marker_Mouse.xlsx"))
   
   ## instead of `cellName`, users can use other features (e.g. `cancerType`)

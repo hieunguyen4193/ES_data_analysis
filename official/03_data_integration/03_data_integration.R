@@ -1,7 +1,6 @@
 gc()
 rm(list = ls())
 
-
 scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
 
 source(file.path(scrna_pipeline_src, "import_libraries.R"))

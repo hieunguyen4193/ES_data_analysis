@@ -42,5 +42,15 @@ filter.config.params <- list(
               pct_ribofloor = NULL, 
               pct_riboceiling = NULL,
               ambientRNA_thres = 0.5,
-              log10GenesPerUMI_thres = NULL)
+              log10GenesPerUMI_thres = NULL),
+  reduced_RNAcontam_0 = list(nFeatureRNAfloor = NULL,
+                             nFeatureRNAceiling = NULL,
+                             nCountRNAfloor = NULL, 
+                             nCountRNAceiling = NULL,
+                             pct_mitofloor = NULL, 
+                             pct_mitoceiling = 5,
+                             pct_ribofloor = NULL, 
+                             pct_riboceiling = NULL,
+                             ambientRNA_thres = 1.01,
+                             log10GenesPerUMI_thres = NULL)
 )

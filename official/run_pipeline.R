@@ -6,11 +6,13 @@ set.seed(my_random_seed)
 
 # __________VDJ DATA ANYLYSIS PIPELINE__________
 PROJECT <- "EStange_20240411"
-config.version <- "default"
+# config.version <- "default"
+config.version <- "reduced_RNAcontam_0"
+
 if (config.version == "default"){
   version.name <- "SeuratV5"  
 } else {
-  version.name <- sprintf("%s_%s", version.name, config.version)
+  version.name <- sprintf("%s_%s", PROJECT, config.version)
 }
 
 PROJECT.with.version <- sprintf("%s_%s", PROJECT, version.name)
