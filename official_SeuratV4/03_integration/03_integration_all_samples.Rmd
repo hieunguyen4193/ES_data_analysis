@@ -546,13 +546,13 @@ p <- pct.table.sample.longer  %>%
 ggplotly(p)
 ```
 
-
 ```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
 pct.table.cluster.longer <- pct.table.cluster %>% rownames_to_column("name") %>% 
   pivot_longer(!name, names_to = "seurat_clusters", values_to = "Freq")
 
 p <- pct.table.cluster.longer  %>% 
-  ggplot(aes(x = seurat_clusters, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack") 
+  ggplot(aes(x = seurat_clusters, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack") +
+  theme(axis.text.x = element_text(angle = 90))
 ggplotly(p)
 ```
 

@@ -5,7 +5,8 @@ gc()
 rm(list = ls())
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
+# PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 path.to.main.output <- file.path(outdir, PROJECT)
 path.to.save.html <- file.path(path.to.main.output, "html_outputs")

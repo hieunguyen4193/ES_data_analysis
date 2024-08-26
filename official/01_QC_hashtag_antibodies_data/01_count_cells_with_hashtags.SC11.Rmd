@@ -47,13 +47,9 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-# PROJECT <- params$PROJECT
-# sample.id <- params$sample.id
-# outdir <- params$outdir
-
-outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
-sample.id <- "SC11"
+PROJECT <- params$PROJECT
+sample.id <- params$sample.id
+outdir <- params$outdir
 
 chosen.quantile <- 0.90
 chosen.quantile.others <- 0.99

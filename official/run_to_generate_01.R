@@ -6,7 +6,8 @@ gc()
 rm(list = ls())
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
+# PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 path.to.main.output <- file.path(outdir, PROJECT)
 path.to.save.html <- file.path(path.to.main.output, "html_outputs")
@@ -47,7 +48,7 @@ for (sample.id in all.samples){
   }
   print(sample.id)
   print(path.to.rmd)
-  output_file <- str_replace(path.to.rmd, ".Rmd", sprintf(".%s.html", sample.id))
+  output_file <- str_replace(basename(path.to.rmd), ".Rmd", sprintf(".%s.html", sample.id))
   output_dir <- file.path(path.to.save.html, "01_output")
   if (file.exists(file.path(output_dir, output_file)) == FALSE){
     rmarkdown::render(input = path.to.rmd, 
@@ -68,7 +69,7 @@ for (sample.id in all.samples){
   } else {
     path.to.rmd <- file.path(path.to.main.src, src.dir, "01_comparing_different_quantile.d7_GF.Rmd")
   }
-  output_file <- str_replace(path.to.rmd, ".Rmd", sprintf(".%s.html", sample.id))
+  output_file <- str_replace(basename(path.to.rmd), ".Rmd", sprintf(".%s.html", sample.id))
   output_dir <- file.path(path.to.save.html, "01_output")
   if (file.exists(file.path(output_dir, output_file)) == FALSE){
     rmarkdown::render(input = path.to.rmd, 

@@ -89,13 +89,9 @@ my_random_seed <- 42
 #####----------------------------------------------------------------------#####
 ##### input arguments
 #####----------------------------------------------------------------------#####
-# PROJECT <- params$PROJECT
-# sample.id <- params$sample.id
-# outdir <- params$outdir
-
-outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
-sample.id <- "SC5"
+PROJECT <- params$PROJECT
+sample.id <- params$sample.id
+outdir <- params$outdir
 
 path.to.main.input <- file.path(outdir, PROJECT)
 
@@ -262,6 +258,16 @@ s.obj <- RunPCA(s.obj, features = c(s.genes, g2m.genes), nfeatures.print = 10, r
 DimPlot(s.obj, reduction = "CELLCYCLED_PCA", group.by = "Phase", pt.size = 1)
 ```
 
+## UMAP: ambient RNA contamination level on UMAP
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+FeaturePlot(object = s.obj, reduction = "RNA_UMAP", feature = "AmbientRNA")
+```
+
+## Violin plot: Ambient RNA contamination level
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+VlnPlot(object = s.obj, feature = "AmbientRNA")
+```
+
 # Cluster marker genes
 
 Identify differentially expressed genes in each cluster. 
@@ -356,7 +362,7 @@ if (packageVersion("clusterProfiler") != "4.10.1"){
   remove.packages("clusterProfiler")
   remove.packages("DOSE")
   remove.packages("GOSemSim")
-  path.to.install.dir <- "/media/hieunguyen/HD0/storage/offline_pkgs/clusterProfiler"
+  path.to.install.dir <- "/media/hieunguyen/HD01/storage/offline_pkgs/clusterProfiler"
   install.packages(file.path(path.to.install.dir, "HDO.db_0.99.1.tar.gz"), type = "source", repos = NULL)
   install.packages(file.path(path.to.install.dir, "yulab.utils_0.1.4.tar.gz"), type = "source", repos = NULL)
   install.packages(file.path(path.to.install.dir, "GOSemSim_2.28.1.tar.gz"), type = "source", repos = NULL)
@@ -381,7 +387,7 @@ annotate_with_pathway <- function(cluster.id, topN = 20){
       tmpdf <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC)) %>% head(topN)    
   }
 
-  path.to.cellmarker2.0 <- "/media/hieunguyen/HD0/storage/CellMarker2.0"
+  path.to.cellmarker2.0 <- "/media/hieunguyen/HD01/storage/CellMarker2.0"
   cell_marker_data <- readxl::read_excel(file.path(path.to.cellmarker2.0, "Cell_marker_Mouse.xlsx"))
   
   ## instead of `cellName`, users can use other features (e.g. `cancerType`)

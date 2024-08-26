@@ -9,10 +9,12 @@ PROJECT <- "EStange_20240411"
 # config.version <- "default"
 config.version <- "reduced_RNAcontam_0"
 
+# devtools::install_github("ncborcherding/scRepertoire@v1")
+
 if (config.version == "default"){
   version.name <- "SeuratV5"  
 } else {
-  version.name <- sprintf("%s_%s", PROJECT, config.version)
+  version.name <- config.version
 }
 
 PROJECT.with.version <- sprintf("%s_%s", PROJECT, version.name)
@@ -21,7 +23,7 @@ source("/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_VDJ_pipeline/main_V
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 
-path.to.storage <- "/media/hieunguyen/HD0/storage"
+path.to.storage <- "/media/hieunguyen/HD01/storage"
 path.to.main.input <- file.path(path.to.storage, "EStange", PROJECT)
 
 path.to.main.output <- file.path(outdir, PROJECT.with.version)
