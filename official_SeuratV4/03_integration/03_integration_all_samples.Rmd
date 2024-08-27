@@ -246,6 +246,32 @@ DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE,
         title = element_text(size = 20, face = "bold"))
 ```
 
+# Ambient RNA contamination on UMAP 
+
+## All samples, integrated
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+FeaturePlot(object = s.obj, features = "AmbientRNA", label = TRUE, label.size = 8, reduction = "INTE_UMAP")
+```
+
+## Each sample, integrated UMAP {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- FeaturePlot(object = subset(s.obj, name == sample.id), features = "AmbientRNA", label = TRUE, label.size = 8, reduction = "INTE_UMAP")
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Each sample, Violin plot ambient RNA contamination level in each cluster {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- VlnPlot(object = subset(s.obj, name == sample.id), features = "AmbientRNA")
+  print(p)
+  cat("\n \n")
+}
+```
 
 # Cluster markers of integrated dataset
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
@@ -448,12 +474,12 @@ pct.table.cluster %>% create_dt()
 
 ### Raw counts
 ```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
-p <- count.cell.in.cluster %>% ggplot(aes(x = seurat_clusters, y = Freq, fill = HTO_classification)) + geom_bar(stat = "identity", dodge = "stack")
+p <- count.cell.in.cluster %>% ggplot(aes(x = seurat_clusters, y = Freq, fill = HTO_classification)) + geom_bar(stat = "identity", dodge = "stack") + theme(axis.text.x = element_text(angle = 90))
 ggplotly(p)
 ```
 
 ```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
-p <- count.cell.in.cluster %>% ggplot(aes(x = HTO_classification, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack")
+p <- count.cell.in.cluster %>% ggplot(aes(x = HTO_classification, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack") + theme(axis.text.x = element_text(angle = 90))
 ggplotly(p)
 ```
 
@@ -464,7 +490,7 @@ pct.table.sample.longer <- pct.table.sample %>% rownames_to_column("seurat_clust
   pivot_longer(!seurat_clusters, names_to = "name", values_to = "Freq")
 pct.table.sample.longer$seurat_clusters <- factor(pct.table.sample.longer$seurat_clusters, levels = seq(0, length(unique(pct.table.sample.longer$seurat_clusters)) - 1))
 p <- pct.table.sample.longer  %>% 
-  ggplot(aes(x = name, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack")
+  ggplot(aes(x = name, y = Freq, fill = seurat_clusters)) + geom_bar(stat = "identity", dodge = "stack") + theme(axis.text.x = element_text(angle = 90))
 ggplotly(p)
 ```
 
@@ -474,7 +500,7 @@ pct.table.cluster.longer <- pct.table.cluster %>% rownames_to_column("name") %>%
   pivot_longer(!name, names_to = "seurat_clusters", values_to = "Freq")
 
 p <- pct.table.cluster.longer  %>% 
-  ggplot(aes(x = seurat_clusters, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack")
+  ggplot(aes(x = seurat_clusters, y = Freq, fill = name)) + geom_bar(stat = "identity", dodge = "stack") + theme(axis.text.x = element_text(angle = 90))
 ggplotly(p)
 ```
 
