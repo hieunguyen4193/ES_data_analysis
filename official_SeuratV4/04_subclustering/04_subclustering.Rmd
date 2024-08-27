@@ -14,7 +14,8 @@ output:
     number_sections: true
     theme: lumen
 params:
-  run: NA
+  outdir: NA
+  PROJECT: NA
   sub.cluster.id: NA
   s.obj.name: NA
 ---
@@ -68,10 +69,15 @@ num.PC.used.in.Clustering <- 25
 
 path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/processes_src"
 
-outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV4"
-s.obj.name <- "all_sobj.integrated.rds"
-sub.cluster.id <- "subset_231031"
+# outdir <- "/home/hieunguyen/CRC1382/outdir"
+# PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
+# s.obj.name <- "all_sobj.integrated.rds"
+# sub.cluster.id <- "Myeloid_Basophils"
+
+outdir <- params$outdir
+PROJECT <- params$PROJECT
+s.obj.name <- params$s.obj.name
+sub.cluster.id <- params$sub.cluster.id
 
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
 
@@ -88,6 +94,18 @@ s.obj.original <- readRDS(file.path(path.to.03.output, s.obj.name))
 ## Original dataset
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 DimPlot(object = s.obj.original, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE, repel = TRUE)
+```
+
+## Selected clusters
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
+sub.clusters <- hash()
+sub.clusters[["all_sobj.integrated.rds"]] <- list(
+  Myeloid_Basophils = c(20, 5, 3, 8, 17, 16, 25, 26, 9, 7, 12, 28, 11),
+  B_cells = c(2, 21, 27, 29, 15, 10, 22),
+  T_cells = c(14, 1, 6, 13, 4, 24, 0))
+
+DimPlot(object = subset(s.obj.original, seurat_clusters %in% sub.clusters[[s.obj.name]][[sub.cluster.id]]), 
+        reduction = "INTE_UMAP", label = TRUE, label.box = TRUE, repel = TRUE)
 ```
 
 ## Group by annotated subclusters
@@ -321,4 +339,93 @@ print(p)
 s.obj@meta.data %>% subset(select = c(seurat_clusters)) %>% table() %>% as.data.frame() %>% create_dt()
 ```
 
+
+# Ambient RNA contamination on UMAP 
+
+## All samples, integrated
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+FeaturePlot(object = s.obj, features = "AmbientRNA", label = TRUE, label.size = 8, reduction = "INTE_UMAP")
+```
+
+## Each sample, integrated UMAP {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- FeaturePlot(object = subset(s.obj, name == sample.id), features = "AmbientRNA", label = TRUE, label.size = 8, reduction = "INTE_UMAP")
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Each sample, Violin plot ambient RNA contamination level in each cluster {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- VlnPlot(object = subset(s.obj, name == sample.id), features = "AmbientRNA")
+  print(p)
+  cat("\n \n")
+}
+```
+
+# Differential gene expression analysis: high ambient RNA contaminated cells vs others
+
+- positive logFC indicates that the gene is higher in the "ambient RNA contaminated cells >= 50%" cells. - negative logFC indicates that the gene is lower in the "ambient RNA contaminated cells >= 50%" cells.
+
+```{r echo=FALSE, fig.height=10, fig.width=14, message=FALSE, warning=FALSE, results='asis'}
+high.ambientRNA.cells <- subset(s.obj@meta.data, s.obj@meta.data$AmbientRNA >= 0.5) %>% row.names()
+
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
+  rowwise() %>%
+  mutate(high.ambientRNA = ifelse(barcode %in% high.ambientRNA.cells, "yes", "no")) %>%
+  column_to_rownames("barcode")
+meta.data <- meta.data[row.names(s.obj@meta.data), ]
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$high.ambientRNA, col.name = "high.ambientRNA")
+
+if (file.exists(file.path(path.to.04.output, "preprocessed_subcluster_obj", sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id))) == FALSE){
+  high.ambientRNA.markers <- FindMarkers(object = s.obj, ident.1 = "yes", ident.2 = "no", group.by = "high.ambientRNA", assay = "RNA", test.use = "wilcox")
+  high.ambientRNA.markers.raw <- high.ambientRNA.markers
+  high.ambientRNA.markers <- subset(high.ambientRNA.markers, high.ambientRNA.markers$p_val_adj <= 0.05)
+  saveRDS(high.ambientRNA.markers.raw, file.path(path.to.04.output, "preprocessed_subcluster_obj", sprintf("high.ambientRNA.markers_%s.raw.rds", sub.cluster.id)))
+  saveRDS(high.ambientRNA.markers, file.path(path.to.04.output, "preprocessed_subcluster_obj", sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id)))
+} else {
+  high.ambientRNA.markers <- readRDS(file.path(path.to.04.output, "preprocessed_subcluster_obj", sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id)))
+  high.ambientRNA.markers.raw <- readRDS(file.path(path.to.04.output, "preprocessed_subcluster_obj", sprintf("high.ambientRNA.markers_%s.raw.rds", sub.cluster.id)))
+}
+
+high.ambientRNA.markers <- high.ambientRNA.markers %>% rownames_to_column("Gene") %>% rowwise() %>%
+  mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+```
+
+## Full table: All differentially expressed genes
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+high.ambientRNA.markers %>% create_dt()
+```
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+input.df <- high.ambientRNA.markers.raw %>% rownames_to_column("Gene")
+all.pvals <- unique(input.df$p_val_adj)
+all.pvals <- all.pvals[all.pvals != 0]
+min.pval.adj <- min(all.pvals)
+input.df <- input.df %>% rowwise() %>%
+  mutate(p_val_adj = ifelse(p_val_adj == 0, min.pval.adj, p_val_adj))
+
+top10up.genes <- input.df %>% subset(p_val_adj <= 0.05 & avg_log2FC > 0) %>% arrange(desc(avg_log2FC)) %>% head(10)
+top10down.genes <- input.df %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(10)
+input.df <- input.df %>%
+rowwise() %>%
+mutate(sig = ifelse(p_val_adj <= 0.05, "Sig.", "not Sig.")) %>%
+  mutate(show.gene.name = ifelse(Gene %in% c(top10up.genes$Gene, top10down.genes$Gene), Gene, NA))
+  
+cutoff.adjp <- 0.05
+volcano.plot <- ggplot(data=input.df, aes(x=avg_log2FC, y=-log10(p_val_adj ), col = sig, label=Gene)) +
+  geom_point() +
+  geom_label_repel(label = input.df$show.gene.name, size = 8, max.overlaps = 100) +
+  scale_color_manual(values=c("#c0d2f0", "#f28095")) +
+  theme_minimal() +
+  geom_vline(xintercept=c(-1, 1), col="#9a9fa6", linetype='dotted') +
+  geom_hline(yintercept=-log10(cutoff.adjp), col="#9a9fa6", linetype='dotted') +
+  theme_bw() +
+  theme(plot.title = element_text(hjust=0.5, face="bold", size = 12), axis.text=element_text(size=12))
+volcano.plot
+```
 

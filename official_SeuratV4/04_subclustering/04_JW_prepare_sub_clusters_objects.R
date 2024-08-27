@@ -18,8 +18,10 @@ num.PC.used.in.Clustering <- 25
 
 path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/processes_src"
 
-outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV4"
+# outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
+outdir <- "/home/hieunguyen/CRC1382/outdir"
+# PROJECT <- "EStange_20240411_SeuratV4"
+PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
 
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
 
@@ -28,12 +30,18 @@ path.to.02.output <- file.path(path.to.main.output, "02_output")
 path.to.03.output <- file.path(path.to.main.output, "03_output")
 dir.create(path.to.03.output, showWarnings = FALSE, recursive = TRUE)
 
-sub.clusters <- hash()
+##### sub clusters indices for the PROJECT = "EStange_20240411_SeuratV4"
+# sub.clusters <- hash()
+# sub.clusters[["all_sobj.integrated.rds"]] <- list(Myeloid_Basophils = c(5, 3, 13, 18, 23, 22, 7, 10, 8, 24, 15, 27, 12),
+#                                                   B_cells = c(21, 16, 9, 19, 26, 2, 25),
+#                                                   T_cells = c(17, 20, 6, 14, 4, 11, 1, 0),
+#                                                   subset_231031 = c(8, 10, 7, 22, 13, 3, 5))
 
-sub.clusters[["all_sobj.integrated.rds"]] <- list(Myeloid_Basophils = c(5, 3, 13, 18, 23, 22, 7, 10, 8, 24, 15, 27, 12),
-                                                  B_cells = c(21, 16, 9, 19, 26, 2, 25),
-                                                  T_cells = c(17, 20, 6, 14, 4, 11, 1, 0),
-                                                  subset_231031 = c(8, 10, 7, 22, 13, 3, 5))
+##### sub clusters indices for the PROJECT = "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
+sub.clusters <- hash()
+sub.clusters[["all_sobj.integrated.rds"]] <- list(Myeloid_Basophils = c(20, 5, 3, 8, 17, 16, 25, 26, 9, 7, 12, 28, 11),
+                                                  B_cells = c(2, 21, 27, 29, 15, 10, 22),
+                                                  T_cells = c(14, 1, 6, 13, 4, 24, 0))
 
 # loop through all integrated R.objects
 for (s.obj.name in c("all_sobj.integrated.rds")){
@@ -60,7 +68,6 @@ for (s.obj.name in c("all_sobj.integrated.rds")){
     saveRDS(sub.clusterdf, file.path(path.to.04.output, "sub_cluster_objects", "convert_cluster_to_celltype_table.rds"))
     write.csv(data.frame(data = c("Finished generating subset of cells at step 04")), file.path(path.to.04.output, "FINISHED_STEP04_JW.csv"))  
   }
-
 }
 
 write.csv(data.frame(data = c("Finished generating subset of cells at step 04")), file.path(path.to.04.output, "FINISHED_STEP04_ALL_CASES_JW.csv"))

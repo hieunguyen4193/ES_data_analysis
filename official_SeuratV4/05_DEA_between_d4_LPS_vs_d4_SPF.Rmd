@@ -76,8 +76,10 @@ sample2 <- "d4_SPF"
 
 path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/processes_src"
 
-outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV4"
+# outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
+# PROJECT <- "EStange_20240411_SeuratV4"
+outdir <- "/home/hieunguyen/CRC1382/outdir"
+PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
 s.obj.name <- "all_sobj.integrated.rds"
 sub.cluster.id <- "subset_231031"
 
