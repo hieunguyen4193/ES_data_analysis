@@ -41,8 +41,8 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
-gc()
-rm(list = ls())
+# gc()
+# rm(list = ls())
 
 
 scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
@@ -62,12 +62,8 @@ num.PC.used.in.Clustering <- 25
 
 path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/processes_src"
 
-# outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 outdir <- "/home/hieunguyen/CRC1382/outdir"
-# PROJECT <- "EStange_20240411_SeuratV4"
-PROJECT <- "EStange_20240411_SeuratV4"
-config.version <- "reduced_RNAcontam_0"
-PROJECT <- sprintf("%s_%s", PROJECT, config.version)
+PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
 
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
 
@@ -256,6 +252,7 @@ high.ambientRNA.markers <- high.ambientRNA.markers %>% rownames_to_column("Gene"
 high.ambientRNA.markers %>% create_dt()
 ```
 
+## Volcano plot
 ```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
 input.df <- high.ambientRNA.markers.raw %>% rownames_to_column("Gene")
 all.pvals <- unique(input.df$p_val_adj)

@@ -29,7 +29,7 @@ my_random_seed <- 42
 # outdir <- params$outdir
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 integration.config <- list(
   all.samples = c("adult_GF",
@@ -67,7 +67,17 @@ integration.config <- list(
                     "d7_SPF",
                     "SC12",
                     "SC11",
-                    "SC5")
+                    "SC5"),
+  remove_d4_LPS_SC5_SC11 = c("adult_GF",
+                             "d4_GF",
+                             "adult_SPF",
+                             "d10_SPF",
+                             "d4_SPF",
+                             "d15_SPF",
+                             "d7_GF",
+                             "d20_SPF",
+                             "d7_SPF",
+                             "SC12")
 )
 
 cell.cycle.features <- list(

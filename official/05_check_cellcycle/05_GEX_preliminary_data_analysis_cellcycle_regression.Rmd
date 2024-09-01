@@ -88,15 +88,15 @@ my_random_seed <- 42
 #####----------------------------------------------------------------------#####
 ##### input arguments
 #####----------------------------------------------------------------------#####
-# PROJECT <- params$PROJECT
-# sample.id <- params$sample.id
-# outdir <- params$outdir
-# regression.mode <- params$regression.mode
+PROJECT <- params$PROJECT
+sample.id <- params$sample.id
+outdir <- params$outdir
+regression.mode <- params$regression.mode
 
-outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
-sample.id <- "d4_SPF"
-regression.mode <- "S_G2M_G1_scores"
+# outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
+# PROJECT <- "EStange_20240411_SeuratV5"
+# sample.id <- "d4_SPF"
+# regression.mode <- "S_G2M_G1_scores"
 
 path.to.main.input <- file.path(outdir, PROJECT)
 

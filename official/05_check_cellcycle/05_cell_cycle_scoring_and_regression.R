@@ -18,14 +18,8 @@ if ("svglite" %in% installed.packages() == FALSE){
 ##### input arguments
 #####----------------------------------------------------------------------#####
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-config.version <- "default"
-
-if (config.version == "default"){
-  PROJECT <- "EStange_20240411_SeuratV5"  
-} else {
-  PROJECT <- sprintf("EStange_20240411_SeuratV5_%s", config.version)
-}
-
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
+  
 stage_lst <- hash()
 stage_lst[["adult_GF"]] <- c(adult_GF = "adult_GF")
 stage_lst[["adult_SPF"]] <- c(adult_SPF = "adult_SPF")
