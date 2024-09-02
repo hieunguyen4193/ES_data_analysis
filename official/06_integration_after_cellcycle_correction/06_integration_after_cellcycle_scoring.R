@@ -102,7 +102,7 @@ for (regression.mode in c("CC_differences", "S_G2M_G1_scores")){
       integrate.samples <- integration.config[[integration.case]]
       
       ##### merging the data before integration
-      if (file.exists(file.path(path.to.merge.data, sprintf("raw_merge_dataset_%s.rds", integration.case))) == FALSE){
+      if (file.exists(file.path(path.to.merge.data, sprintf("finished_saving_data_case_%s_%s.csv", integration.case, regression.mode))) == FALSE){
         print("Merge data does not exists, generate new merged data...")
         data.list <- list()
         for (i in seq(length(integrate.samples))){
@@ -112,11 +112,11 @@ for (regression.mode in c("CC_differences", "S_G2M_G1_scores")){
           data.list[[i]] <- readRDS(file.path(path.to.05.output, sprintf("%s.cellcycle_reg.rds", sample.id)))
         }
         s.obj <- merge(data.list[[1]], data.list[2: length(integrate.samples)])
-        saveRDS(s.obj, file.path(path.to.merge.data, sprintf("raw_merge_dataset_%s.rds", integration.case)))  
-        write.csv(data.frame(status = c("finished saving data")), file.path(path.to.06.output, "finished_saving_data.csv"))
+        saveRDS(s.obj, file.path(path.to.merge.data, sprintf("raw_merge_dataset_%s_%s.rds", integration.case, regression.mode)))  
+        write.csv(data.frame(status = c("finished saving data")), file.path(path.to.merge.data, sprintf("finished_saving_data_case_%s_%s.csv", integration.case, regression.mode)))
       } else {
         print("reading in raw merge data ...")
-        s.obj <- readRDS(file.path(path.to.merge.data, sprintf("raw_merge_dataset_%s.rds", integration.case)))
+        s.obj <- readRDS(file.path(path.to.merge.data, sprintf("raw_merge_dataset_%s_%s.rds", integration.case, regression.mode)))
       }
       
       num.PCA <- 25

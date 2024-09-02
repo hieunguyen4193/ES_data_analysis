@@ -24,34 +24,12 @@ sc.settings.verbosity = 3
 import warnings
 warnings.filterwarnings("ignore")
 
-outdir = "/media/hieunguyen/HNSD01/outdir"
-# orig_dataset = "GSM5764245"
-all_datasets = ["220907_FH",
-                "GSM5764259",
-                "230228_FH",
-                "GSM5764288",            
-                "GSM5764245",
-                "integrate_GSE192742_LIVER",
-                "gutcellatlas_myeloid",
-               "220907_FH_cDC1",
-               "220907_FH_cDC2"]
-
-for orig_dataset in tqdm(all_datasets):
-    config_version = "v0.1"
-    output_version = "20240828"
-    PROJECT = "FHager_datasets"
-    
-    dataset_name = "{}_{}".format(orig_dataset, config_version)
-    
-    path_to_main_input = os.path.join(outdir,
-                                    PROJECT,
-                                    output_version, 
-                                    dataset_name, 
-                                    "s8a_output",
-                                    "{}.output.s8a.rds".format(dataset_name))
-    
-    path_to_seurat2anndata = os.path.join(outdir, PROJECT, output_version, "seurat2anndata", dataset_name)
-    
+outdir = "/home/hieunguyen/CRC1382/outdir"
+all_datasets = ["full", "Myeloid_Basophils", "T_cells", "B_cells"]
+PROJECT = "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
+for dataset_name in tqdm(all_datasets):
+    path_to_main_output = os.path.join(outdir, PROJECT, "data_analysis")
+    path_to_seurat2anndata = os.path.join(path_to_main_output, "seurat2anndata")
     #####---------------------------------------------------------------------------------------------------------#####
     # load sparse matrix:
     sample_name = dataset_name

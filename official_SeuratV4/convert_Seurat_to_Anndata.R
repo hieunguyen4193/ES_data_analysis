@@ -26,9 +26,9 @@ path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/pro
 
 outdir <- "/home/hieunguyen/CRC1382/outdir"
 PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
-sub.cluster.id <- "Myeloid_Basophils"
-sub.cluster.id <- "T_cells"
-sub.cluster.id <- "B_cells"
+# sub.cluster.id <- "Myeloid_Basophils"
+# sub.cluster.id <- "T_cells"
+# sub.cluster.id <- "B_cells"
 s.obj.name <- "all_sobj.integrated.rds"
 
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
