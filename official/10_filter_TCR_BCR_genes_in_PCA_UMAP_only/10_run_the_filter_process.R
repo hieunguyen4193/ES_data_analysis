@@ -10,14 +10,32 @@ source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.sel
 
 options(future.globals.maxSize = 10000 * 1024^2)
 
+library(argparse)
+
+# Create a parser object
+parser <- ArgumentParser()
+
+# Define arguments
+parser$add_argument("--integration_case", required = TRUE, help = "Choose the integration case")
+parser$add_argument("--filter_mode", required = TRUE, help = "Choose the filter_mode case")
+parser$add_argument("--regression_mode", required = TRUE, help = "Choose the regression mode")
+
+# Parse the arguments
+args <- parser$parse_args()
+
+# Access the arguments
+regression.mode <- args$regression_mode
+integration.case <- args$integration_case
+filter.mode <- args$filter_mode
 #####----------------------------------------------------------------------#####
 ##### INPUT ARGS
 #####----------------------------------------------------------------------#####
 # filter.mode <- "TCR_genes" # filter.mode could be "TCR_genes", "nCounts" or "nCount_and_TCRgenes"
 # integration.case <- "remove_d4_LPS"
 # regression.mode <- "CC_differences"
+
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 #####----------------------------------------------------------------------#####
 ##### SOME CONFIGURATIONS
@@ -73,7 +91,7 @@ BR_genes_patterns <- c("Ighv", "Ighd", "Ighj", "Ighc", "Igkv",
 #####----------------------------------------------------------------------#####
 ##### Define functions
 #####----------------------------------------------------------------------#####
-run_07 <- function(outdir, 
+run_10 <- function(outdir, 
                    PROJECT, 
                    integration.case, 
                    regression.mode, 
@@ -208,7 +226,7 @@ run_07 <- function(outdir,
 #   for (regression.mode in names(cell.cycle.features)){
 #     for (integration.case in names(integration.config)){
 #       print(sprintf("Working on %s - %s - %s", filter.mode, regression.mode, integration.case))
-#       run_07(outdir = outdir, 
+#       run_10(outdir = outdir, 
 #              PROJECT = PROJECT, 
 #              integration.case = integration.case, 
 #              regression.mode = regression.mode, 
@@ -220,12 +238,13 @@ run_07 <- function(outdir,
 #   }
 # }
 
-filter.mode <- "nCount_and_BCR_TCRgenes"
-regression.mode <- "CC_differences"
-integration.case <- "remove_d4_LPS_SC5"
+# filter.mode <- "nCount_and_BCR_TCRgenes"
+# regression.mode <- "CC_differences"
+# integration.case <- "remove_d4_LPS_SC5"
+
 print(sprintf("Working on %s - %s - %s", filter.mode, regression.mode, integration.case))
 
-run_07(outdir = outdir, 
+run_10(outdir = outdir, 
                 PROJECT = PROJECT,
                 integration.case = integration.case,
                 regression.mode = regression.mode,

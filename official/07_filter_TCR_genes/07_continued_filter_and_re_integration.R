@@ -16,7 +16,7 @@ options(future.globals.maxSize = 10000 * 1024^2)
 # integration.case <- "remove_d4_LPS"
 # regression.mode <- "CC_differences"
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 #####----------------------------------------------------------------------#####
 ##### SOME CONFIGURATIONS
