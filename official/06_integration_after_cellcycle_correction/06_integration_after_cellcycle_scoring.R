@@ -9,6 +9,28 @@ source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R")
 
 options(future.globals.maxSize = 10000 * 1024^2)
 
+##### argparse
+
+library(argparse)
+
+# Create a parser object
+parser <- ArgumentParser()
+
+# Define arguments
+parser$add_argument("--integration_case", required = TRUE, help = "Choose the integration case")
+parser$add_argument("--regression_mode", required = TRUE, help = "Choose the regression mode")
+
+# Parse the arguments
+args <- parser$parse_args()
+
+# Access the arguments
+regression.mode <- args$regression_mode
+integration.case <- args$integration_case
+
+# for i in all.samples remove_d4_LPS_SC5 remove_d4_LPS remove_d4_LPS_SC5_SC11;do \
+# for j in CC_differences S_G2M_G1_scores;do Rscript 06_integration_after_cellcycle_scoring.R \ 
+# --integration_case $i --regression_mode $j;done;done
+
 #####----------------------------------------------------------------------#####
 # CONFIGURATIONS 
 #####----------------------------------------------------------------------#####
@@ -91,8 +113,8 @@ path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
 path.to.merge.data <- file.path(path.to.main.output, "06_output", "merge_data")
 dir.create(path.to.merge.data, showWarnings = FALSE, recursive = TRUE)
 
-for (regression.mode in c("CC_differences", "S_G2M_G1_scores")){
-  for (integration.case in names(integration.config)){
+# for (regression.mode in c("CC_differences", "S_G2M_G1_scores")){
+#   for (integration.case in names(integration.config)){
     
     path.to.06.output <- file.path(path.to.main.output, "06_output", integration.case, regression.mode)
     dir.create(path.to.06.output, showWarnings = FALSE, recursive = TRUE)
@@ -144,7 +166,7 @@ for (regression.mode in c("CC_differences", "S_G2M_G1_scores")){
         print("integrated done. file at %s", file.path(path.to.06.output, "s8_output", "EStange_20240411_SeuratV5.output.s8.rds"))
       }
     }
-  }
-}
+#   }
+# }
 
 
