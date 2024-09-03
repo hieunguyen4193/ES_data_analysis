@@ -51,6 +51,7 @@ path.to.01.output <- file.path(path.to.main.output, "01_output")
 path.to.monocle2.input <- file.path(path.to.main.output, "monocle2_inputs")
 dir.create(path.to.monocle2.input, showWarnings = FALSE, recursive = TRUE)
 
+
 for (sub.cluster.id in c("full", "Myeloid_Basophils", "T_cells", "B_cells")){
   monocle.obj <- readRDS(file.path(path.to.monocle2.input, sprintf("%s.rds", sub.cluster.id)))  
   path.to.06.output <- file.path(path.to.main.output, "06_output", sub.cluster.id)
@@ -63,7 +64,6 @@ for (sub.cluster.id in c("full", "Myeloid_Basophils", "T_cells", "B_cells")){
     print("monocle result exists, reading in...")
     monocle.obj <- readRDS(file.path(path.to.06.output, "monocle_obj.rds"))
   }
-  all.monocle.obj[[sub.cluster.id]] <- monocle.obj
   
   ##### plot cell trajectory, color by seurat clusters
   p <- plot_cell_trajectory(monocle.obj, color_by = "seurat_clusters")

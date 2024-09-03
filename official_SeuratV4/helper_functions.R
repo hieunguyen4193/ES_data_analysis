@@ -1,7 +1,9 @@
 #####
 ##### RUN MONOCLE2 FROM S.OBJ
 #####
-run_monocle2_from_presave_obj <- function(monocle.obj, path.to.save.monocle.obj){
+run_monocle2_from_presave_obj <- function(monocle.obj, 
+                                          path.to.save.monocle.obj, 
+                                          cores = 10){
   library(monocle)
   monocle.obj <- estimateSizeFactors(monocle.obj)
   monocle.obj <- estimateDispersions(monocle.obj)
@@ -31,7 +33,7 @@ run_monocle2_from_presave_obj <- function(monocle.obj, path.to.save.monocle.obj)
   clustering_DEG_genes <-
     differentialGeneTest(monocle.obj[ordering.genes,],
                          fullModelFormulaStr = '~Cluster',
-                         cores = 20)
+                         cores = cores)
   
   HSMM_ordering_genes <-
     row.names(clustering_DEG_genes)[order(clustering_DEG_genes$qval)][1:1000]
