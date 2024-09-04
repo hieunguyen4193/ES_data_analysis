@@ -2,46 +2,42 @@
 gc()
 rm(list = ls())
 
-path.to.project.src <- "/media/hieunguyen/HNSD01/src/migratory_ccr7_data_analysis"
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
+source(file.path(scrna_pipeline_src, "import_libraries.R"))
+source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-source(file.path(path.to.project.src, "import_libraries.R"))
-source(file.path(path.to.project.src, "helper_functions.R"))
-source(file.path(path.to.project.src, "config.R"))
-
-all.datasets <- c("220907_FH",
-                  "GSM5764259", 
-                  "integrate_GSE192742_LIVER",
-                  "230228_FH",
-                  "GSM5764288",            
-                  "GSM5764245",
-                  "gutcellatlas_myeloid",
-                  "220907_FH_cDC1",
-                  "220907_FH_cDC2"
-)
-
-outdir <- "/media/hieunguyen/HNSD01/outdir"
-
-config.version <- "v0.1"
-output.version <- "20240828"
-PROJECT <- "FHager_datasets"
-
-input.config <- config.params[[config.version]]
+outdir <- "/home/hieunguyen/CRC1382/outdir"
+PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
+s.obj.name <- "all_sobj.integrated.rds"
 
 if ("svglite" %in% installed.packages() == FALSE){
   install.packages("svglite")
 }
-for (orig.dataset in all.datasets){
-  print(sprintf("working on dataset %s", orig.dataset))
-  dataset.name <- sprintf("%s_%s", orig.dataset, config.version)
-  path.to.save.colors <- file.path(outdir, PROJECT, output.version, "colors", dataset.name)
-  dir.create(path.to.save.colors, showWarnings = FALSE, recursive = TRUE)
-  path.to.main.input <- file.path(outdir, PROJECT, output.version, dataset.name, "data_analysis", "01_output", sprintf("%s.rds", dataset.name))
-  path.to.main.output <- file.path(outdir, PROJECT, output.version, dataset.name, "data_analysis")
-  path.to.02.output <- file.path(path.to.main.output, "02_output_monocle_2.12.0_v1")
+
+all.datasets <- c("full", "Myeloid_Basophils", "T_cells", "B_cells")
+
+sample1 <- "d4_LPS"
+sample2 <- "d4_SPF"
+
+for (sub.cluster.id in all.datasets){
+  print(sprintf("working on dataset %s", sub.cluster.id))
+  path.to.save.colors <- file.path(outdir, PROJECT, output.version, "colors", sub.cluster.id)
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+  path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")  
+  path.to.03.output <- file.path(path.to.main.output, "03_output")
+  path.to.04.output <- file.path(path.to.main.output, "04_output")
+  path.to.05.output <- file.path(path.to.main.output, "05_output", sub.cluster.id)
+  path.to.06.output <- file.path(path.to.main.output, "06_output", sub.cluster.id)
   
-  s.obj <- readRDS(path.to.main.input)
-  monocledf <- read.csv(file.path(path.to.02.output, "monocledf.csv"))
-  monocledf.rev <- read.csv(file.path(path.to.02.output, "monocledf.rev.csv"))
+  if (sub.cluster.id == "full"){
+    s.obj <- readRDS(file.path(path.to.03.output, s.obj.name))
+  } else {
+    s.obj <- readRDS(file.path(path.to.04.output, s.obj.name, "preprocessed_subcluster_obj", sprintf("preprocessed_subclusters_%s.rds", sub.cluster.id)))  
+  }
+  s.obj <- subset(s.obj, name %in% c(sample1, sample2))
+  
+  monocledf <- read.csv(file.path(path.to.06.output, "monocledf.csv"))
+  monocledf.rev <- read.csv(file.path(path.to.06.output, "monocledf.rev.csv"))
   colnames(monocledf.rev) <- c("X", "barcode", "state", "rev.pseudotime")
   meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") 
   meta.data <- merge(meta.data, subset(monocledf, select = c(barcode, pseudotime)), by.x = "barcode", by.y = "barcode")
@@ -52,15 +48,11 @@ for (orig.dataset in all.datasets){
   s.obj <- AddMetaData(object = s.obj, metadata = meta.data$pseudotime, col.name = "pseudotime") 
   s.obj <- AddMetaData(object = s.obj, metadata = meta.data$rev.pseudotime, col.name = "rev.pseudotime") 
   
-  if (orig.dataset == "integrate_GSE192742_LIVER"){
-    umap.reduction.name <- "INTE_UMAP"
-  } else {
-    umap.reduction.name <- "RNA_UMAP"
-  }
+  umap.reduction.name <- "INTE_UMAP"
   umap.pseudotime <- FeaturePlot(object = s.obj, reduction = umap.reduction.name, label = TRUE, features = c("pseudotime"))
   umap.rev.pseudotime <- FeaturePlot(object = s.obj, reduction = umap.reduction.name, label = TRUE, features = c("rev.pseudotime"))
   
-  ggsave(plot = umap.pseudotime, filename = sprintf("%s_umap_pseudotime.svg", dataset.name), path = path.to.02.output, device = "svg", dpi = 300, width = 14, height = 10)
-  ggsave(plot = umap.rev.pseudotime, filename = sprintf("%s_umap_rev_pseudotime.svg", dataset.name), path = path.to.02.output, device = "svg", dpi = 300, width = 14, height = 10)
+  ggsave(plot = umap.pseudotime, filename = sprintf("%s_umap_pseudotime.svg", sub.cluster.id), path = path.to.06.output, device = "svg", dpi = 300, width = 14, height = 10)
+  ggsave(plot = umap.rev.pseudotime, filename = sprintf("%s_umap_rev_pseudotime.svg", sub.cluster.id), path = path.to.06.output, device = "svg", dpi = 300, width = 14, height = 10)
 }
 
