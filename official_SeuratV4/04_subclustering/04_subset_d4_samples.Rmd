@@ -75,7 +75,14 @@ path.to.04.output <- file.path(path.to.main.output, "04_output", "d4_samples_onl
 dir.create(path.to.04.output, showWarnings = FALSE, recursive = TRUE)
 
 s.obj <- readRDS(file.path(path.to.03.output, "all_sobj.integrated.rds"))
-s.obj <- subset(s.obj, name %in% c("d4_LPS", "d4_SPF"))
+
+if (file.exists(file.path(path.to.04.output, "all_sobj.integrated_d4_LPS_d4_SPF_only.rds")) == FALSE){
+  s.obj <- subset(s.obj, name %in% c("d4_LPS", "d4_SPF"))
+  saveRDS(s.obj, file.path(path.to.04.output, "all_sobj.integrated_d4_LPS_d4_SPF_only.rds"))
+} else {
+  s.obj <- readRDS(file.path(path.to.04.output, "all_sobj.integrated_d4_LPS_d4_SPF_only.rds"))
+}
+
 ```
 
 # UMAP
@@ -279,5 +286,10 @@ volcano.plot <- ggplot(data=input.df, aes(x=avg_log2FC, y=-log10(p_val_adj ), co
   theme_bw() +
   theme(plot.title = element_text(hjust=0.5, face="bold", size = 12), axis.text=element_text(size=12))
 volcano.plot
+```
+
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+
 ```
 

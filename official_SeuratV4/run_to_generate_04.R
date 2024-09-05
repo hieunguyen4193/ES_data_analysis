@@ -35,3 +35,11 @@ for (sub.cluster.id in c("Myeloid_Basophils", "B_cells", "T_cells")){
                                     s.obj.name = s.obj.name))    
   }
 }
+
+path.to.rmd <- "/home/hieunguyen/CRC1382/src_2023/EStange/official_SeuratV4/04_subclustering/04_subset_d4_samples.Rmd"
+output_file <- "04_subset_d4_samples_all_clusters.html"
+if (file.exists(file.path(output_dir, output_file)) == FALSE){
+  rmarkdown::render(input = path.to.rmd, 
+                    output_file = output_file,
+                    output_dir = output_dir)    
+}
