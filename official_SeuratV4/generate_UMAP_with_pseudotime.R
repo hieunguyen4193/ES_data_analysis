@@ -21,7 +21,7 @@ sample2 <- "d4_SPF"
 
 for (sub.cluster.id in all.datasets){
   print(sprintf("working on dataset %s", sub.cluster.id))
-  path.to.save.colors <- file.path(outdir, PROJECT, output.version, "colors", sub.cluster.id)
+  path.to.save.colors <- file.path(outdir, PROJECT, "colors", sub.cluster.id)
   path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
   path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")  
   path.to.03.output <- file.path(path.to.main.output, "03_output")
