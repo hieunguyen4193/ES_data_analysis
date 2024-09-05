@@ -88,6 +88,7 @@ TR_genes_patterns <- c("Trav", "Traj", "Trac", "Trbv", "Trbd", "Trbj", "Trbc",
                        "Trgv", "Trgj", "Trgc", "Trdv", "Trdc", "Trdj") 
 BR_genes_patterns <- c("Ighv", "Ighd", "Ighj", "Ighc", "Igkv",
                        "Igkj", "Igkc", "Iglv", "Iglj", "Iglc")
+
 #####----------------------------------------------------------------------#####
 ##### Define functions
 #####----------------------------------------------------------------------#####
@@ -102,6 +103,8 @@ run_10 <- function(outdir,
                    BR_genes_patterns){
   path.to.main.input <- file.path(outdir, PROJECT)
   path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+  # 10 and 06 use them same input merge data; cell cycle regression data from 05
+  path.to.merge.data <- file.path(path.to.main.output, "06_output", "merge_data")
   path.to.10.output <- file.path(path.to.main.output, "10_output", integration.case, regression.mode, filter.mode)
   dir.create(path.to.10.output, showWarnings = FALSE, recursive = TRUE)
   
@@ -117,28 +120,23 @@ run_10 <- function(outdir,
   cluster.resolution <- 0.5
   
   if (file.exists(file.path(path.to.10.output, "s8_output", "EStange_20240411_SeuratV5.output.s8.csv")) == FALSE){
-    if (file.exists(file.path(path.to.10.output, sprintf("raw_merge_dataset_%s.%s.%s.csv", integration.case, regression.mode, filter.mode))) == FALSE){
+    ##### merging the data before integration
+    if (file.exists(file.path(path.to.merge.data, sprintf("finished_saving_data_case_%s_%s.csv", integration.case, regression.mode))) == FALSE){
+      print("Merge data does not exists, generate new merged data...")
       data.list <- list()
       for (i in seq(length(integrate.samples))){
         sample.id <- integrate.samples[[i]]
         path.to.05.output <- file.path(path.to.main.output, "05_output", sample.id, regression.mode)
         print(sprintf("reading in sample %s", sample.id))
-        tmp.s.obj <- readRDS(file.path(path.to.05.output, sprintf("%s.cellcycle_reg.rds", sample.id)))
-        
-        #####--------------------------------------------------------------------#####
-        ##### DO FILTERING STEPS HERE
-        #####--------------------------------------------------------------------#####
-        data.list[[i]] <- tmp.s.obj
+        data.list[[i]] <- readRDS(file.path(path.to.05.output, sprintf("%s.cellcycle_reg.rds", sample.id)))
       }
-      
       s.obj <- merge(data.list[[1]], data.list[2: length(integrate.samples)])
-      saveRDS(s.obj, file.path(path.to.10.output, sprintf("raw_merge_dataset_%s.%s.%s.rds", integration.case, regression.mode, filter.mode)))
-      write.csv(data.frame(status = c("finished saving file")), 
-                file.path(path.to.10.output, sprintf("raw_merge_dataset_%s.%s.%s.csv", integration.case, regression.mode, filter.mode)))
+      saveRDS(s.obj, file.path(path.to.merge.data, sprintf("raw_merge_dataset_%s_%s.rds", integration.case, regression.mode)))  
+      write.csv(data.frame(status = c("finished saving data")), file.path(path.to.merge.data, sprintf("finished_saving_data_case_%s_%s.csv", integration.case, regression.mode)))
     } else {
-      print("reading merge data in to s.obj ...")
-      s.obj <- readRDS(file.path(path.to.10.output, sprintf("raw_merge_dataset_%s.%s.%s.rds", integration.case, regression.mode, filter.mode)))
-      print("finished reading in saved data ...")
+      print("reading in raw merge data ...")
+      print(sprintf("Using data from the path %s", file.path(path.to.merge.data, sprintf("raw_merge_dataset_%s_%s.rds", integration.case, regression.mode))))
+      s.obj <- readRDS(file.path(path.to.merge.data, sprintf("raw_merge_dataset_%s_%s.rds", integration.case, regression.mode)))
     }
     
     ##### remove TCR genes
@@ -253,5 +251,3 @@ run_10(outdir = outdir,
                 cell.cycle.features = cell.cycle.features,
                 TR_genes_patterns = TR_genes_patterns,
                 BR_genes_patterns = BR_genes_patterns)
-
-
