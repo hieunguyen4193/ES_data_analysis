@@ -1,5 +1,5 @@
 ---
-title: "Analysis on the integrated dataset, integration: `r params$integration.case`, regression: `r params$regression.mode`, filter by `r params$filter.mode`, sub-cluster: `r params$subcluster.name`"
+title: "Analysis on the integrated dataset, integration: `r params$integration.case`, regression: `r params$regression.mode`, filter by `r params$filter.mode`"
 author:
   - "trnguyen@ukaachen.de"
 date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
@@ -17,7 +17,6 @@ params:
   integration.case: NA
   regression.mode: NA
   filter.mode: NA
-  subcluster.name: NA
 ---
 
 
@@ -78,14 +77,12 @@ my_random_seed <- 42
 integration.case <- params$integration.case
 regression.mode <- params$regression.mode
 filter.mode <- params$filter.mode
-subcluster.name <- params$subcluster.name
 
-integration.case <- "remove_d4_LPS_SC5"
-regression.mode <- "CC_differences"
-filter.mode <- "nCount_and_BCR_TCRgenes"
-# subcluster.name <- "lymphoids"
+# integration.case <- "remove_d4_LPS_SC5"
+# regression.mode <- "CC_differences"
+# filter.mode <- "nCount_and_BCR_TCRgenes"
 
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 outdir2 <- "/home/hieunguyen/CRC1382/outdir"
 
@@ -95,7 +92,6 @@ path.to.main.output2 <- file.path(outdir2, PROJECT, "data_analysis")
 path.to.01.output <- file.path(path.to.main.output, "01_output")
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
-# path.to.10.output <- file.path(path.to.main.output2, "10_output", integration.case, regression.mode, filter.mode, subcluster.name)
 path.to.10.output <- file.path(path.to.main.output2, "10_output", integration.case, regression.mode, filter.mode)
   
 path.to.s.obj <- file.path(path.to.10.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT))
@@ -603,10 +599,10 @@ for (i in names(split.BCRgenes.to.exclude)){
 
 
 ```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
-tmp.s.obj <- readRDS("/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_SeuratV5/data_analysis/06_output/remove_d4_LPS_SC5/CC_differences/s8_output/EStange_20240411_SeuratV5.output.s8.rds")
-
-variable.genes <- VariableFeatures(tmp.s.obj)
-intersect(variable.genes, c(TCRgenes.to.exclude, BCRgenes.to.exclude))
+# tmp.s.obj <- readRDS("/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_SeuratV5/data_analysis/06_output/remove_d4_LPS_SC5/CC_differences/s8_output/EStange_20240411_SeuratV5.output.s8.rds")
+# 
+# variable.genes <- VariableFeatures(tmp.s.obj)
+# intersect(variable.genes, c(TCRgenes.to.exclude, BCRgenes.to.exclude))
 ```
 
 
