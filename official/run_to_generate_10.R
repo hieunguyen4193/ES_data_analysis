@@ -57,7 +57,17 @@ integration.config <- list(
                     "d7_SPF",
                     "SC12",
                     "SC11",
-                    "SC5")
+                    "SC5"),
+  remove_d4_LPS_SC5_SC11 = c("adult_GF",
+                             "d4_GF",
+                             "adult_SPF",
+                             "d10_SPF",
+                             "d4_SPF",
+                             "d15_SPF",
+                             "d7_GF",
+                             "d20_SPF",
+                             "d7_SPF",
+                             "SC12")
 )
 
 cell.cycle.features <- list(
@@ -65,14 +75,14 @@ cell.cycle.features <- list(
   S_G2M_G1_scores = c("S.Score", "G2M.Score", "G1.Score")
 )
 
-all.filter.cases <- c("BCR_genes",
-                      "nCount_and_BCRgenes",
-                      "nCount_and_TCRgenes",
-                      "nCount",
-                      "nCount_and_BCR_TCRgenes",
-                      "TCR_genes",
-                      "BCR_TCR_genes")
-
+# all.filter.cases <- c("BCR_genes",
+#                       "nCount_and_BCRgenes",
+#                       "nCount_and_TCRgenes",
+#                       "nCount",
+#                       "nCount_and_BCR_TCRgenes",
+#                       "TCR_genes",
+#                       "BCR_TCR_genes")
+all.filter.cases <- c("nCount_and_BCR_TCRgenes")
 for (filter.mode in all.filter.cases){
   for (regression.mode in names(cell.cycle.features)){
     for (integration.case in names(integration.config)){
