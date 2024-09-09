@@ -75,7 +75,7 @@ my_random_seed <- 42
 input.case <- params$input.case
 regression.mode <- params$regression.mode
 
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 
 path.to.main.input <- file.path(outdir, PROJECT)
@@ -190,7 +190,7 @@ if (packageVersion("clusterProfiler") != "4.10.1"){
   remove.packages("clusterProfiler")
   remove.packages("DOSE")
   remove.packages("GOSemSim")
-  path.to.install.dir <- "/media/hieunguyen/HD0/storage/offline_pkgs/clusterProfiler"
+  path.to.install.dir <- "/media/hieunguyen/HD01/storage/offline_pkgs/clusterProfiler"
   install.packages(file.path(path.to.install.dir, "HDO.db_0.99.1.tar.gz"), type = "source", repos = NULL)
   install.packages(file.path(path.to.install.dir, "yulab.utils_0.1.4.tar.gz"), type = "source", repos = NULL)
   install.packages(file.path(path.to.install.dir, "GOSemSim_2.28.1.tar.gz"), type = "source", repos = NULL)
@@ -215,7 +215,7 @@ annotate_with_pathway <- function(cluster.id, topN = 20){
       tmpdf <- subset(cluster.markers, cluster.markers$cluster == cluster.id) %>% arrange(desc(avg_log2FC)) %>% head(topN)    
   }
 
-  path.to.cellmarker2.0 <- "/media/hieunguyen/HD0/storage/CellMarker2.0"
+  path.to.cellmarker2.0 <- "/media/hieunguyen/HD01/storage/CellMarker2.0"
   cell_marker_data <- readxl::read_excel(file.path(path.to.cellmarker2.0, "Cell_marker_Mouse.xlsx"))
   
   ## instead of `cellName`, users can use other features (e.g. `cancerType`)
