@@ -34,6 +34,9 @@ outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+path.to.save.cloupe.file <- file.path(path.to.main.output, "cloupe", integration.case, regression.mode, filter.mode)
+dir.create(path.to.save.cloupe.file, showWarnings = FALSE, recursive = TRUE)
+
 path.to.01.output <- file.path(path.to.main.output, "01_output")
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
@@ -42,23 +45,69 @@ path.to.10.output <- file.path(path.to.main.output, "10_output", integration.cas
 path.to.s.obj <- file.path(path.to.10.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT))
 s.obj <- readRDS(path.to.s.obj)
 
-#### CONVERT seurat object to cloupe file
+##### sub-sampling each clusters of the main seurat object
+sampling.rate <- 0.75
+
+cluster.barcodes <- list()
+subsampling.cluster.barcodes <- list()
+
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode")
+
+set.seed(411)
+
+all.subsampling.cells <- c()
+for (cluster.id in unique(meta.data$cca.cluster.0.5)){
+  cluster.barcodes[[cluster.id]] <- subset(meta.data, meta.data$cca.cluster.0.5 == cluster.id)$barcode
+  subsampling.cluster.barcodes[[cluster.id]] <- sample(cluster.barcodes[[cluster.id]], round(sampling.rate * length(cluster.barcodes[[cluster.id]]) ))
+  all.subsampling.cells <- c(all.subsampling.cells, 
+                             subsampling.cluster.barcodes[[cluster.id]])
+}
+
+s.obj <- subset(s.obj, cells = all.subsampling.cells)
+s.obj.no.reInt <- s.obj
+
+num.PCA <- 25
+num.PC.used.in.UMAP <- 25
+num.PC.used.in.Clustering <- 25
+regressOut_mode <- NULL
+features_to_regressOut <- NULL
+use.sctransform <- TRUE
+vars.to.regress <- c("percent.mt")
+cluster.resolution <- 0.5
+
+DefaultAssay(s.obj) <- "RNA"
+s.obj <- JoinLayers(s.obj)
+s.obj.integrated <- s8.integration.and.clustering_V5(s.obj = s.obj, 
+                                                     save.RDS.s8 = TRUE,
+                                                     path.to.output = path.to.save.cloupe.file,
+                                                     use.sctransform = TRUE,
+                                                     num.PCA = num.PCA,
+                                                     num.PC.used.in.UMAP = num.PC.used.in.UMAP,
+                                                     num.PC.used.in.Clustering = num.PC.used.in.Clustering,
+                                                     cluster.resolution = cluster.resolution,
+                                                     vars.to.regress = vars.to.regress)
+
+##### CONVERT seurat object to cloupe file
 if ("loupeR" %in% installed.packages() == FALSE){
   install.packages("hdf5r")
   install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
 }
 
-if (file.exists(file.path(path.to.07.output, sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
-                                                     sub.cluster.idx))) == FALSE){
-  library(loupeR)
-  loupeR::setup()
-  create_loupe_from_seurat(
-    s.obj,
-    output_dir = file.path(path.to.07.output),
-    output_name = sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
-                          sub.cluster.idx),
-    dedup_clusters = FALSE,
-    executable_path = NULL,
-    force = TRUE)  
-}
+library(loupeR)
+loupeR::setup()
+create_loupe_from_seurat(
+  s.obj,
+  output_dir = file.path(path.to.save.cloupe.file),
+  output_name = sprintf("converted_cloupe_file.subSampling_%s.reIntegration.cloupe", sampling.rate),
+  dedup_clusters = FALSE,
+  executable_path = NULL,
+  force = TRUE)
+
+create_loupe_from_seurat(
+  s.obj.no.reInt,
+  output_dir = file.path(path.to.save.cloupe.file),
+  output_name = sprintf("converted_cloupe_file.subSampling_%s.cloupe", sampling.rate),
+  dedup_clusters = FALSE,
+  executable_path = NULL,
+  force = TRUE)
 
