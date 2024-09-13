@@ -74,13 +74,13 @@ my_random_seed <- 42
 #####----------------------------------------------------------------------#####
 ##### input arguments
 #####----------------------------------------------------------------------#####
-# integration.case <- params$integration.case
-# regression.mode <- params$regression.mode
-# filter.mode <- params$filter.mode
+integration.case <- params$integration.case
+regression.mode <- params$regression.mode
+filter.mode <- params$filter.mode
 
-integration.case <- "all.samples"
-regression.mode <- "CC_differences"
-filter.mode <- "nCount_and_BCR_TCRgenes"
+# integration.case <- "all.samples"
+# regression.mode <- "CC_differences"
+# filter.mode <- "nCount_and_BCR_TCRgenes"
 
 PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"

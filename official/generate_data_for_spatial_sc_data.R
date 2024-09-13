@@ -41,3 +41,24 @@ path.to.10.output <- file.path(path.to.main.output, "10_output", integration.cas
 
 path.to.s.obj <- file.path(path.to.10.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT))
 s.obj <- readRDS(path.to.s.obj)
+
+#### CONVERT seurat object to cloupe file
+if ("loupeR" %in% installed.packages() == FALSE){
+  install.packages("hdf5r")
+  install.packages("/media/hieunguyen/HD01/storage/offline_pkgs/loupeR_Linux.tar.gz", repos = NULL, type = "source")
+}
+
+if (file.exists(file.path(path.to.07.output, sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
+                                                     sub.cluster.idx))) == FALSE){
+  library(loupeR)
+  loupeR::setup()
+  create_loupe_from_seurat(
+    s.obj,
+    output_dir = file.path(path.to.07.output),
+    output_name = sprintf("PROJECT_%s_%s_cloupe_converted_from_seurat", PROJECT, 
+                          sub.cluster.idx),
+    dedup_clusters = FALSE,
+    executable_path = NULL,
+    force = TRUE)  
+}
+

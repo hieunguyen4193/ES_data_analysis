@@ -595,16 +595,16 @@ DimPlot(object = s.obj, reduction = "cca_UMAP", cells.highlight = high.ambientRN
 
 
 ```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
-if (file.exists(file.path(path.to.10.output, "high.ambientRNA.markers.rds")) == FALSE){
+if (file.exists(file.path(path.to.03.output, "high.ambientRNA.markers.rds")) == FALSE){
   s.obj <- PrepSCTFindMarkers(s.obj)
   high.ambientRNA.markers <- FindMarkers(object = s.obj, ident.1 = "yes", ident.2 = "no", group.by = "high.ambientRNA", assay = "SCT", test.use = "wilcox")
   high.ambientRNA.markers.raw <- high.ambientRNA.markers
   high.ambientRNA.markers <- subset(high.ambientRNA.markers, high.ambientRNA.markers$p_val_adj <= 0.05)
-  saveRDS(high.ambientRNA.markers.raw, file.path(path.to.10.output, "high.ambientRNA.markers.raw.rds"))
-  saveRDS(high.ambientRNA.markers, file.path(path.to.10.output, "high.ambientRNA.markers.rds"))
+  saveRDS(high.ambientRNA.markers.raw, file.path(path.to.03.output, "high.ambientRNA.markers.raw.rds"))
+  saveRDS(high.ambientRNA.markers, file.path(path.to.03.output, "high.ambientRNA.markers.rds"))
 } else {
-  high.ambientRNA.markers <- readRDS(file.path(path.to.10.output, "high.ambientRNA.markers.rds"))
-  high.ambientRNA.markers.raw <- readRDS(file.path(path.to.10.output, "high.ambientRNA.markers.raw.rds"))
+  high.ambientRNA.markers <- readRDS(file.path(path.to.03.output, "high.ambientRNA.markers.rds"))
+  high.ambientRNA.markers.raw <- readRDS(file.path(path.to.03.output, "high.ambientRNA.markers.raw.rds"))
 }
 
 high.ambientRNA.markers <- high.ambientRNA.markers %>% rownames_to_column("Gene") %>% rowwise() %>%
