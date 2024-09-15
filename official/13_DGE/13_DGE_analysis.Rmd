@@ -17,6 +17,7 @@ params:
   sample1: NA
   sample2: NA
   path.to.s.obj: NA
+  path.to.save.output: NA
 ---
 
 
@@ -50,11 +51,6 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 
 - **negative** `logFC` indicates that the gene is highly expressed in the sample 1, `r params$sample1`.
 
-Name of the input Seurat data object used in this analysis: 
-`r basename(params$path.to.s.obj)`
-
-Path:
-`r params$path.to.s.obj`
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 #####----------------------------------------------------------------------#####
@@ -88,13 +84,27 @@ if (packageVersion("clusterProfiler") == "4.13.3"){
   remotes::install_github("GuangchuangYu/clusterProfiler", upgrade = "never")
 }
 #####----------------------------------------------------------------------#####
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
+source(file.path(scrna_pipeline_src, "import_libraries.R"))
+source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
+sample1 <- params$sample1
+sample2 <- params$sample2
+path.to.s.obj <- params$path.to.s.obj 
+path.to.save.output <- params$path.to.save.output
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
+s.obj <- readRDS(path.to.s.obj)
 ```
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 all.genes.in.Mm.db <- keys(org.Mm.eg.db, keytype = "SYMBOL")
-
 ```
 
 **In this analysis, we conduct the Differential gene expression analysis between sample** `r params$sample1` vs. `r params$sample2`  **in the dataset ** `r basename(params$path.to.s.obj)`**. We also removed TCR genes.**
@@ -122,7 +132,7 @@ genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
 s.obj <- subset(s.obj, name %in% c(sample1, sample2))
 savename <- sprintf("sample_%s_vs_%s.single_cell.rds", sample1, sample2)
 savename.raw <- sprintf("sample_%s_vs_%s.raw.single_cell.rds", sample1, sample2)
-if (file.exists(file.path(path.to.06.output, savename)) == FALSE){
+if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
   de.markers <- hash()
   de.markers.raw <- hash()
   num.clusters <- length(unique(s.obj$seurat_clusters))
@@ -168,11 +178,11 @@ if (file.exists(file.path(path.to.06.output, savename)) == FALSE){
     de.markers[[sprintf("cluster_%s", cluster.id)]] <- tmp.de.markers
     de.markers.raw[[sprintf("cluster_%s", cluster.id)]] <- tmp.de.markers.raw
   }
-  saveRDS(object = de.markers, file.path(path.to.06.output, savename))
-  saveRDS(object = de.markers.raw, file.path(path.to.06.output, savename.raw))
+  saveRDS(object = de.markers, file.path(path.to.save.output, savename))
+  saveRDS(object = de.markers.raw, file.path(path.to.save.output, savename.raw))
 } else {
-  de.markers <- readRDS(file.path(path.to.06.output, savename))
-  de.markers.raw <- readRDS(file.path(path.to.06.output, savename.raw))
+  de.markers <- readRDS(file.path(path.to.save.output, savename))
+  de.markers.raw <- readRDS(file.path(path.to.save.output, savename.raw))
 }
 
 
@@ -367,7 +377,7 @@ for(cluster.id in all.cluster.ids){
 
 ### GO-ORA {.tabset}
 ```{r echo=FALSE, warning=FALSE, results='asis'}
-if (file.exists(file.path(path.to.06.output, "all_ORA_GO_objects.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds")) == FALSE){
   go.ora <- hash()
   all.ORA.GO.objects <- hash()
   for (cluster.id in all.cluster.ids){
@@ -394,11 +404,11 @@ if (file.exists(file.path(path.to.06.output, "all_ORA_GO_objects.single_cell.rds
       go.ora[[cluster.id]] <- data.frame(data = c("No DE genes to conduct ORA"))
     }
   }
-  saveRDS(all.ORA.GO.objects, file.path(path.to.06.output, "all_ORA_GO_objects.single_cell.rds"))
-  saveRDS(go.ora, file.path(path.to.06.output, "all_ORA_GO_tables.single_cell.rds"))
+  saveRDS(all.ORA.GO.objects, file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds"))
+  saveRDS(go.ora, file.path(path.to.save.output, "all_ORA_GO_tables.single_cell.rds"))
 } else {
-  all.ORA.GO.objects <- readRDS(file.path(path.to.06.output, "all_ORA_GO_objects.single_cell.rds"))
-  go.ora <- readRDS(file.path(path.to.06.output, "all_ORA_GO_tables.single_cell.rds"))
+  all.ORA.GO.objects <- readRDS(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds"))
+  go.ora <- readRDS(file.path(path.to.save.output, "all_ORA_GO_tables.single_cell.rds"))
 }
 ```
 
@@ -433,7 +443,7 @@ for (cluster.id in names(go.ora)){
 
 ### KEGG-ORA {.tabset}
 ```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE}
-if (file.exists(file.path(path.to.06.output, "all_ORA_KEGG_objects.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds")) == FALSE){
   kegg.ora <- hash()
   all.ORA.KEGG.objects <- hash()
   for (cluster.id in all.cluster.ids){
@@ -461,11 +471,11 @@ if (file.exists(file.path(path.to.06.output, "all_ORA_KEGG_objects.single_cell.r
     }
 
   }
-  saveRDS(all.ORA.KEGG.objects, file.path(path.to.06.output, "all_ORA_KEGG_objects.single_cell.rds"))
-  saveRDS(kegg.ora, file.path(path.to.06.output, "all_ORA_KEGG_tables.single_cell.rds"))
+  saveRDS(all.ORA.KEGG.objects, file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds"))
+  saveRDS(kegg.ora, file.path(path.to.save.output, "all_ORA_KEGG_tables.single_cell.rds"))
 }else {
-  all.ORA.KEGG.objects <- readRDS(file.path(path.to.06.output, "all_ORA_KEGG_objects.single_cell.rds"))
-  kegg.ora <- readRDS(file.path(path.to.06.output, "all_ORA_KEGG_tables.single_cell.rds"))
+  all.ORA.KEGG.objects <- readRDS(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds"))
+  kegg.ora <- readRDS(file.path(path.to.save.output, "all_ORA_KEGG_tables.single_cell.rds"))
 }
 
 ```
@@ -506,7 +516,7 @@ for (cluster.id in names(kegg.ora)){
 go.gsea <- hash()
 all.GSEA.GO.objects <- hash()
 
-if (file.exists(file.path(path.to.06.output, "GO_GSEA_all_GO_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.06.output, "GO_GSEA_pathways_tables.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds")) == FALSE){
   for(cluster.id in all.cluster.ids){
   tmp.full.list <- de.markers.raw[[cluster.id]] %>% arrange(desc(avg_log2FC))
   input.gene.list <- tmp.full.list$avg_log2FC
@@ -530,11 +540,11 @@ if (file.exists(file.path(path.to.06.output, "GO_GSEA_all_GO_objects.single_cell
   GSEA.GO.sum.res <- GSEA.GO.sum.res %>% mutate_if(is.numeric, round, 6)
   go.gsea[[cluster.id]] <- GSEA.GO.sum.res  
 }
-  saveRDS(object = go.gsea, file = file.path(path.to.06.output, "GO_GSEA_pathways_tables.single_cell.rds"))
-  saveRDS(object = all.GSEA.GO.objects, file = file.path(path.to.06.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
+  saveRDS(object = go.gsea, file = file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds"))
+  saveRDS(object = all.GSEA.GO.objects, file = file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
 } else {
-  go.gsea <- readRDS(file.path(path.to.06.output, "GO_GSEA_pathways_tables.single_cell.rds"))
-  all.GSEA.GO.objects <- readRDS(file.path(path.to.06.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
+  go.gsea <- readRDS(file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds"))
+  all.GSEA.GO.objects <- readRDS(file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
 }
 ```
 
@@ -577,7 +587,7 @@ kegg.gsea <- hash()
 all.GSEA.KEGG.objects <- hash()
 
 
-if (file.exists(file.path(path.to.06.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.06.output, "KEGG_GSEA_pathways_tables.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds")) == FALSE){
   for(cluster.id in all.cluster.ids){
     tmp.full.list <- de.markers.raw[[cluster.id]] %>% arrange(desc(avg_log2FC))
     convertdf <- bitr(tmp.full.list$Gene, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
@@ -607,11 +617,11 @@ if (file.exists(file.path(path.to.06.output, "KEGG_GSEA_all_KEGG_objects.single_
     GSEA.KEGG.sum.res <- GSEA.KEGG.sum.res %>% mutate_if(is.numeric, round, 6) 
     kegg.gsea[[cluster.id]] <- GSEA.KEGG.sum.res
   }
-  saveRDS(object = kegg.gsea, file = file.path(path.to.06.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
-  saveRDS(object = all.GSEA.KEGG.objects, file = file.path(path.to.06.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
+  saveRDS(object = kegg.gsea, file = file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
+  saveRDS(object = all.GSEA.KEGG.objects, file = file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
 } else {
-  kegg.gsea <- readRDS(file.path(path.to.06.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
-  all.GSEA.KEGG.objects <- readRDS(file.path(path.to.06.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
+  kegg.gsea <- readRDS(file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
+  all.GSEA.KEGG.objects <- readRDS(file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
 }
 
 ```
@@ -879,7 +889,7 @@ resdf.sigOnly %>% mutate_if(is.numeric, round, 8) %>% create_dt()
 
 ## Scaled z-score pseudobulk gene expression, all DE genes
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.06.output, sprintf("heatmap_input_%s_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2, foxp3)))
+writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2, foxp3)))
 ```
 
 
