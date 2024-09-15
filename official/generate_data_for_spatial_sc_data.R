@@ -1,11 +1,11 @@
 gc()
 rm(list = ls())
 
-scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
+
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
-source(file.path(scrna_pipeline_src, "s8_integration_and_clustering.R"))
-
+source(file.path(scrna_pipeline_src, "s8_integration_and_clustering_SeuratV5.R"))
 #####----------------------------------------------------------------------#####
 # CONFIGURATIONS 
 #####----------------------------------------------------------------------#####
