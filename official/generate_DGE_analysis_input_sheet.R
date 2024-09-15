@@ -10,6 +10,8 @@ outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+path.to.save.samplesheet <- file.path(path.to.main.output, "sampleSheets_for_DGE_and_CellChat")
+dir.create(path.to.save.samplesheet, showWarnings = FALSE, recursive = TRUE)
 
 ##### get s.obj objects from the 03 output
 all.03.results <- Sys.glob(file.path(path.to.main.output, "03_output", "*", "s8_output", "*.rds"))
@@ -18,6 +20,7 @@ tmp.03.output <- data.frame(
   integration.case = to_vec( for(item in all.03.results) str_split(item, "/")[[1]][[9]]),
   path = all.03.results
 )
+writexl::write_xlsx(tmp.03.output, file.path(path.to.save.samplesheet, "SampleSheet_03_output.xlsx"))
 
 ##### get s.obj objects from the 10 output
 all.10.results <- Sys.glob(file.path(path.to.main.output, "10_output", "*", "*", "*", "s8_output", "*.rds"))
@@ -28,3 +31,4 @@ tmp.10.output <- data.frame(
   filter.mode = to_vec( for(item in all.10.results) str_split(item, "/")[[1]][[12]]),
   path = all.10.results
 )
+writexl::write_xlsx(tmp.10.output, file.path(path.to.save.samplesheet, "SampleSheet_10_output.xlsx"))
