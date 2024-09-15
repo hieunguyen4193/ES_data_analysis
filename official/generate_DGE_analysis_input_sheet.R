@@ -20,4 +20,11 @@ tmp.03.output <- data.frame(
 )
 
 ##### get s.obj objects from the 10 output
-
+all.10.results <- Sys.glob(file.path(path.to.main.output, "10_output", "*", "*", "*", "s8_output", "*.rds"))
+tmp.10.output <- data.frame(
+  output_index = c("10_output"),
+  integration.case = to_vec( for(item in all.10.results) str_split(item, "/")[[1]][[10]]),
+  regression.mode = to_vec( for(item in all.10.results) str_split(item, "/")[[1]][[11]]),
+  filter.mode = to_vec( for(item in all.10.results) str_split(item, "/")[[1]][[12]]),
+  path = all.10.results
+)
