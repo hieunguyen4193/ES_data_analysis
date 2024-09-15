@@ -17,7 +17,6 @@ params:
   sample1: NA
   sample2: NA
   path.to.s.obj: NA
-  foxp3: NA
 ---
 
 
@@ -68,7 +67,7 @@ Path:
 # gc()
 # rm(list = ls())
 if ("org.Mm.eg.db" %in% installed.packages() == FALSE){
-  BiocManager::install("org.Mm.eg.db")
+  BiocManager::install("org.Mm.eg.db", update = FALSE)
 }
 
 if ("heatmaply" %in% installed.packages() == FALSE){
@@ -76,55 +75,26 @@ if ("heatmaply" %in% installed.packages() == FALSE){
 }
 
 library(org.Mm.eg.db)
+# devtools::install_github("YuLab-SMU/yulab.utils", upgrade = "never")
 
+#####----------------------------------------------------------------------#####
+##### UPGRADE THE CLUSTERPROFILER PACKAGES
+if (packageVersion("clusterProfiler") == "4.13.3"){
+  remove.packages("DOSE")
+  remove.packages("GOSemSim")
+  remove.packages("yulab.utils")
+  remove.packages("clusterProfiler")
+  remotes::install_github("GuangchuangYu/GOSemSim", upgrade = "never")
+  remotes::install_github("GuangchuangYu/clusterProfiler", upgrade = "never")
+}
+#####----------------------------------------------------------------------#####
+
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 all.genes.in.Mm.db <- keys(org.Mm.eg.db, keytype = "SYMBOL")
 
-run <- "230605_220928_Stange"
-
-sample1 <- params$sample1
-sample2 <- params$sample2
-path.to.s.obj <- params$path.to.s.obj
-foxp3 <- params$foxp3
-
-# sample1 <- "d7_SPF"
-# sample2 <- "d7_GF"
-# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange/CRC1382_EStange_projects/230605_220928_Stange/data_analysis/05_output/all_sobj_remove_d4_LPS.integrated.rds/recluster_VDJ/TRAV11.TRAJ18/reclustering_case_A_TRAV11.TRAJ18.neg.rds"
-# foxp3 <- "notgiven"
-
-s.obj.original <- readRDS(path.to.s.obj)
-
-scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
-# scrna_pipeline_src <- "/home/uk104163/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
-source(file.path(scrna_pipeline_src, "import_libraries.R"))
-source(file.path(scrna_pipeline_src, "helper_functions.R"))
-
-library(scales)
-library(scatterpie)
-
-outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange"
-# outdir <- "/media/outdir/EStange"
-path.to.maindir <- sprintf("%s/CRC1382_EStange_projects/%s/data_analysis", outdir, run)
-
-path.to.01.output <- file.path(path.to.maindir, "01_output")
-path.to.02.output <- file.path(path.to.maindir, "02_output")
-path.to.04.output <- file.path(path.to.maindir, "04_output")
-
-path.to.06.output <- file.path(path.to.maindir, "06_output", 
-                               str_replace(basename(path.to.s.obj), ".rds", ""), 
-                               sprintf("%s_%s_Foxp3_%s", sample1, sample2, foxp3))
-dir.create(path.to.06.output, showWarnings = FALSE, recursive = TRUE)
-
-count.mtx.foxp3 <- GetAssayData(s.obj.original, slot = "counts", assay = "RNA")["Foxp3", ]
-
-if (foxp3 == "positive"){
-  foxp3.cells <- names(count.mtx.foxp3[count.mtx.foxp3 > 0])
-  s.obj <- subset(s.obj.original, cells = foxp3.cells)
-} else if (foxp3 == "zero") {
-  foxp3.cells <- names(count.mtx.foxp3[count.mtx.foxp3 == 0])
-  s.obj <- subset(s.obj.original, cells = foxp3.cells)
-} else {
-  s.obj <- s.obj.original
-}
 ```
 
 **In this analysis, we conduct the Differential gene expression analysis between sample** `r params$sample1` vs. `r params$sample2`  **in the dataset ** `r basename(params$path.to.s.obj)`**. We also removed TCR genes.**
@@ -147,7 +117,6 @@ genes.to.exclude <- unlist(lapply(all_genes, function(x){
 genes.to.exclude <- subset(genes.to.exclude, is.na(genes.to.exclude) == FALSE)
 genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
 ```
-
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 s.obj <- subset(s.obj, name %in% c(sample1, sample2))
@@ -275,25 +244,6 @@ for (cluster.id in all.clusters.in.de.markers){
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-# devtools::install_github("YuLab-SMU/yulab.utils", upgrade = "never")
-
-#####----------------------------------------------------------------------#####
-##### UPGRADE THE CLUSTERPROFILER PACKAGES
-# just run ONCE per each analysis!!!
-# remove.packages("DOSE")
-# remove.packages("GOSemSim")
-# remove.packages("yulab.utils")
-# remove.packages("clusterProfiler")
-# 
-# remotes::install_github("GuangchuangYu/GOSemSim", upgrade = "never")
-# remotes::install_github("GuangchuangYu/clusterProfiler", upgrade = "never")
-
-# 
-# install.packages("/home/hieunguyen/CRC1382/storage/offline_pkgs/org.Mm.eg.db_3.18.0.tar.gz", type = "sources", repos = NULL)
-# install.packages("/home/hieunguyen/CRC1382/storage/offline_pkgs/org.Mm.eg.db_3.18.0.tar.gz", type = "sources", repos = NULL)
-# BiocManager::install("org.Mm.eg.db")
-# install.packages("heatmaply")
-#####----------------------------------------------------------------------#####
 library("clusterProfiler")
 ```
 
