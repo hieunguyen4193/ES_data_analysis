@@ -83,7 +83,7 @@ s.obj <- subset(s.obj, name == sample.id)
 #####----------------------------------------------------------------------#####
 ##### LIST OF GENES AFTER REMOVING TRA/TRB/TRD/TRG GENES
 #####----------------------------------------------------------------------#####
-DefaultAssay(s.obj) <- "RNA"
+DefaultAssay(s.obj) <- "SCT"
 TR_genes_patterns <- c("Trav", "Traj", "Trac", "Trbv", "Trbd", "Trbj", "Trbc",
                              "Trgv", "Trgj", "Trgc", "Trdv", "Trdc", "Trdj") 
 all_genes <- row.names(s.obj)
@@ -97,7 +97,7 @@ genes.to.exclude <- unlist(lapply(all_genes, function(x){
 genes.to.exclude <- subset(genes.to.exclude, is.na(genes.to.exclude) == FALSE)
 genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
 
-data.matrix <- GetAssayData(object = s.obj, assay = "RNA", slot = "data")
+data.matrix <- GetAssayData(object = s.obj, assay = "SCT", slot = "data")
 ```
 
 # Dataset overview
@@ -116,7 +116,7 @@ DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, 
 # Basic Data analysis
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 ##### Get the input data matrix
-data.input <- GetAssayData(object = s.obj, slot = "data", assay = "RNA")
+data.input <- GetAssayData(object = s.obj, slot = "data", assay = "SCT")
 meta.data <- s.obj@meta.data %>% 
   rownames_to_column("barcode") %>%
   rowwise() %>%
@@ -127,7 +127,7 @@ num.cluster <- length(unique(s.obj$seurat_clusters))
 all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$seurat_clusters)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
 
 meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
-cellchat <- createCellChat(object = data.input, meta = meta.data, group.by = "cluster")
+cellchat <- createCellChat(object = ^, meta = meta.data, group.by = "cluster")
 
 ##### Some preprocessing steps for the cellchat object
 cellchat <- addMeta(cellchat, meta = meta.data)

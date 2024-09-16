@@ -91,7 +91,7 @@ use.sctransform <- TRUE
 vars.to.regress <- c("percent.mt", cell.cycle.features[[regression.mode]])
 cluster.resolution <- 0.5
 
-s.obj <- readRDS(file.path(path.to.10.output, "s8_output", "EStange_20240411_SeuratV5.output.s8.rds"))
+s.obj <- readRDS(file.path(path.to.10.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT)))
 
 sub.clusters <- list(
   T_cells = c(0, 1, 4, 7, 8, 10, 12, 16, 17),
