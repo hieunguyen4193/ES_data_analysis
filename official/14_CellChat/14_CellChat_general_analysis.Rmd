@@ -127,7 +127,7 @@ num.cluster <- length(unique(s.obj$seurat_clusters))
 all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$seurat_clusters)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
 
 meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
-cellchat <- createCellChat(object = ^, meta = meta.data, group.by = "cluster")
+cellchat <- createCellChat(object = data.input, meta = meta.data, group.by = "cluster")
 
 ##### Some preprocessing steps for the cellchat object
 cellchat <- addMeta(cellchat, meta = meta.data)
