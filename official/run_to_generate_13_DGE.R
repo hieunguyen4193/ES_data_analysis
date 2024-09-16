@@ -35,21 +35,21 @@ input.samplesheet <- samplesheets[["03_output"]]
 path.to.save.html <- file.path(output_dir, "03_output")
 
 i = 1
-integration.case <- input.samplesheet[i, ][["integration.case"]]
-path.to.s.obj <- input.samplesheet[i, ][["path"]]
-output.file.name <- sprintf("%s_%s_%s_vs_%s.html", str_replace(basename(path.to.rmd), ".Rmd"), integration.case, sample1, sample2)
-path.to.save.DGE.output <- file.path(path.to.13.output, integration.case, sprintf("%s_%s", sample1, sample2))
-dir.create(path.to.save.DGE.output, showWarnings = FALSE, recursive = TRUE)
-
 sample1 <- "adult_SPF"
 sample2 <- "d7_SPF"
 
-rmarkdown::render(path.to.rmd, 
-                  params = list(
-                    sample1 = sample1, 
-                    sample2 = sample2, 
-                    path.to.s.obj = path.to.s.obj,
-                    path.to.save.output = path.to.save.DGE.output
-                  ),
-                  output_file = output.file.name,
-                  output_dir = path.to.save.html)
+integration.case <- input.samplesheet[i, ][["integration.case"]]
+path.to.s.obj <- input.samplesheet[i, ][["path"]]
+output.file.name <- sprintf("%s_%s_%s_vs_%s.html", str_replace(basename(path.to.rmd), ".Rmd", ""), integration.case, sample1, sample2)
+path.to.save.DGE.output <- file.path(path.to.13.output, integration.case, sprintf("%s_%s", sample1, sample2))
+dir.create(path.to.save.DGE.output, showWarnings = FALSE, recursive = TRUE)
+
+# rmarkdown::render(path.to.rmd, 
+#                   params = list(
+#                     sample1 = sample1, 
+#                     sample2 = sample2, 
+#                     path.to.s.obj = path.to.s.obj,
+#                     path.to.save.output = path.to.save.DGE.output
+#                   ),
+#                   output_file = output.file.name,
+#                   output_dir = path.to.save.html)

@@ -75,7 +75,7 @@ library(org.Mm.eg.db)
 
 #####----------------------------------------------------------------------#####
 ##### UPGRADE THE CLUSTERPROFILER PACKAGES
-if (packageVersion("clusterProfiler") == "4.13.3"){
+if (packageVersion("clusterProfiler") != "4.13.3"){
   remove.packages("DOSE")
   remove.packages("GOSemSim")
   remove.packages("yulab.utils")
@@ -88,14 +88,28 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-sample1 <- params$sample1
-sample2 <- params$sample2
-path.to.s.obj <- params$path.to.s.obj 
-path.to.save.output <- params$path.to.save.output
+# sample1 <- params$sample1
+# sample2 <- params$sample2
+# path.to.s.obj <- params$path.to.s.obj 
+# path.to.save.output <- params$path.to.save.output
+
+library(clusterProfiler)
+if (packageVersion("org.Mm.eg.db") != "3.19.1"){
+  install.packages("https://bioconductor.org/packages/release/bioc/src/contrib/AnnotationDbi_1.66.0.tar.gz", 
+                   type = "source", repos = NULL)
+  install.packages("https://bioconductor.org/packages/release/data/annotation/src/contrib/org.Mm.eg.db_3.19.1.tar.gz", 
+                   type = "source", repos = NULL)
+}
+library(org.Mm.eg.db)
+
+sample1 <- "d7_SPF"
+sample2 <- "adult_SPF"
+path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_SeuratV5/data_analysis/13_output/all.samples/adult_SPF_d7_SPF"
+
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-
 print(sprintf("Path to the input Seurat object: %s", path.to.s.obj))
 print(sprintf("Sample 1: %s", sample1))
 print(sprintf("Sample 2: %s", sample2))
@@ -106,7 +120,7 @@ s.obj <- readRDS(path.to.s.obj)
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
-all.genes.in.Mm.db <- keys(org.Mm.eg.db, keytype = "SYMBOL")
+all.genes.in.Mm.db <- AnnotationDbi::keys(org.Mm.eg.db, keytype = "SYMBOL")
 ```
 
 **In this analysis, we conduct the Differential gene expression analysis between sample** `r params$sample1` vs. `r params$sample2`  **in the dataset ** `r basename(params$path.to.s.obj)`**. We also removed TCR genes.**
@@ -115,7 +129,7 @@ all.genes.in.Mm.db <- keys(org.Mm.eg.db, keytype = "SYMBOL")
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 TR_genes_patterns <- c("Trav", "Traj", "Trac", "Trbv", "Trbd", "Trbj", "Trbc",
                              "Trgv", "Trgj", "Trgc", "Trdv", "Trdc", "Trdj") 
-DefaultAssay(s.obj) <- "RNA"
+DefaultAssay(s.obj) <- "SCT"
 
 all_genes <- row.names(s.obj)
       
@@ -158,9 +172,10 @@ if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
     }
     
     if (count.sample1 >= 10 & count.sample2 >= 10){
+      tmp.s.obj <- PrepSCTFindMarkers(tmp.s.obj)
       tmp.de.markers <- FindMarkers(object = tmp.s.obj, ident.1 = sample2, ident.2 = sample1, 
-                                  group.by = "name", test.use = "wilcox", assay = "RNA",
-                                  features = intersect(row.names(s.obj), genes.to.keep))
+                                  group.by = "name", test.use = "wilcox", assay = "SCT",
+                                  features = intersect(row.names(s.obj), genes.to.keep), recorrect_umi = FALSE)
       
       tmp.de.markers.raw <-  tmp.de.markers %>% 
           rownames_to_column("Gene") %>%
@@ -287,7 +302,7 @@ for (cluster.id in all.clusters.in.de.markers){
     inputdf <- inputdf %>% subset(p_val_adj <= 0.05) %>% arrange(desc(avg_log2FC))
     top10up.genes <- inputdf %>% head(10)
     top10down.genes <- inputdf %>% tail(10)
-    p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "RNA")  
+    p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "SCT")  
   }
   print(p)
   cat("\n \n")
@@ -414,11 +429,9 @@ if (file.exists(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.r
 }
 ```
 
-
 ```{r echo=FALSE, warning=FALSE, results='asis', include=FALSE}
 go.ora[["cluster_0"]] %>% create_dt()
 ```
-
 
 ```{r echo=FALSE, warning=FALSE, results='asis'}
 for (cluster.id in names(go.ora)){
@@ -768,7 +781,7 @@ for(cluster.id in all.cluster.ids){
 library(DESeq2)
 s.obj.full <- s.obj.original
 
-count.mtx.foxp3 <- GetAssayData(s.obj.full, slot = "counts", assay = "RNA")["Foxp3", ]
+count.mtx.foxp3 <- GetAssayData(s.obj.full, slot = "counts", assay = "SCT")["Foxp3", ]
 
 if (foxp3 == "positive"){
   foxp3.cells <- names(count.mtx.foxp3[count.mtx.foxp3 > 0])
@@ -789,8 +802,8 @@ DimPlot(object = subset(s.obj.full, name %in% c(sample1, sample2)), reduction = 
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-DefaultAssay(s.obj[[sample1]]) <- "RNA"
-DefaultAssay(s.obj[[sample2]]) <- "RNA"
+DefaultAssay(s.obj[[sample1]]) <- "SCT"
+DefaultAssay(s.obj[[sample2]]) <- "SCT"
 
 hashtag.cells <- hash()
 hashtag.cells[[sample1]] <- hash()
@@ -818,7 +831,7 @@ count.matrix <- hash()
 pseudobulk.matrix <- data.frame(Gene = rownames(s.obj[[sample1]]))
 for (sample.id in c(sample1, sample2)){
   count.matrix[[sample.id]] <- hash()
-  tmp.count.matrix <- GetAssayData(object = s.obj[[sample.id]], slot = "counts", assay = "RNA")
+  tmp.count.matrix <- GetAssayData(object = s.obj[[sample.id]], slot = "counts", assay = "SCT")
   for (ht in all.ht[[sample.id]]){
     tmp <- tmp.count.matrix[, hashtag.cells[[sample.id]][[ht]]]
     rowsum.tmp <- rowSums(tmp)
@@ -990,7 +1003,7 @@ For all significant pathways, we generate a bar-plot showing all Normalized Enri
 `set.seed(42)` and set `seed = TRUE` in the functions of `clusterProfiler` to ensure reproducibility.
 
 
-# Pathway analysis results for the pseudobulk RNA DE test
+# Pathway analysis results for the pseudobulk SCT DE test
 
 ```{r, echo=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 diff.markers.df <- resdf
@@ -1013,11 +1026,7 @@ sig.diff.markers.df %>% mutate_if(is.numeric, round, 6) %>% arrange(desc(log2Fol
 ```
 
 ## Over-representation analysis (ORA)
-```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE, include=FALSE}
-library(clusterProfiler)
-library(org.Mm.eg.db)
 
-```
 
 ### GO-ORA
 ```{r echo=FALSE, warning=FALSE, results='asis'}
