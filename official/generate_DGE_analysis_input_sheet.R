@@ -8,16 +8,17 @@ source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
+path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/EStange/official"
 
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
-path.to.save.samplesheet <- file.path(path.to.main.output, "sampleSheets_for_DGE_and_CellChat")
+path.to.save.samplesheet <- file.path(path.to.main.src, "sampleSheets_for_DGE_and_CellChat")
 dir.create(path.to.save.samplesheet, showWarnings = FALSE, recursive = TRUE)
 
 ##### get s.obj objects from the 03 output
 all.03.results <- Sys.glob(file.path(path.to.main.output, "03_output", "*", "s8_output", "*.rds"))
 tmp.03.output <- data.frame(
   output_index = c("03_output"),
-  integration.case = to_vec( for(item in all.03.results) str_split(item, "/")[[1]][[9]]),
+  integration.case = to_vec( for(item in all.03.results) str_split(item, "/")[[1]][[10]]),
   path = all.03.results
 )
 writexl::write_xlsx(tmp.03.output, file.path(path.to.save.samplesheet, "SampleSheet_03_output.xlsx"))

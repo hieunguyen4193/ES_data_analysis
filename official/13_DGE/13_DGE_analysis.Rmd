@@ -95,13 +95,15 @@ path.to.save.output <- params$path.to.save.output
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-```
 
+print(sprintf("Path to the input Seurat object: %s", path.to.s.obj))
+print(sprintf("Sample 1: %s", sample1))
+print(sprintf("Sample 2: %s", sample2))
+```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 s.obj <- readRDS(path.to.s.obj)
 ```
-
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 all.genes.in.Mm.db <- keys(org.Mm.eg.db, keytype = "SYMBOL")
