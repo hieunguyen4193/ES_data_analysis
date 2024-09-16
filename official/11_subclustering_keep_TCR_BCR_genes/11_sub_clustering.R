@@ -16,8 +16,7 @@ options(future.globals.maxSize = 10000 * 1024^2)
 # integration.case <- "remove_d4_LPS"
 # regression.mode <- "CC_differences"
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-outdir2 <- "/home/hieunguyen/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 integration.config <- list(
   all.samples = c("adult_GF",
@@ -77,10 +76,9 @@ filter.mode <- "nCount_and_BCR_TCRgenes"
 
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
-path.to.main.output2 <- file.path(outdir2, PROJECT, "data_analysis")
 
-path.to.10.output <- file.path(path.to.main.output2, "10_output", integration.case, regression.mode, filter.mode)
-path.to.11.output <- file.path(path.to.main.output2, "11_output", integration.case, regression.mode, filter.mode)
+path.to.10.output <- file.path(path.to.main.output, "10_output", integration.case, regression.mode, filter.mode)
+path.to.11.output <- file.path(path.to.main.output, "11_output", integration.case, regression.mode, filter.mode)
 dir.create(path.to.11.output, showWarnings = FALSE, recursive = TRUE)
 integrate.samples <- integration.config[[integration.case]]
 
@@ -96,9 +94,9 @@ cluster.resolution <- 0.5
 s.obj <- readRDS(file.path(path.to.10.output, "s8_output", "EStange_20240411_SeuratV5.output.s8.rds"))
 
 sub.clusters <- list(
-  lymphoids = c(0, 1, 4, 6, 7, 10, 11, 12, 18),
-  myeloids = c(3, 8, 9, 13, 14, 16, 17, 19, 20, 21),
-  b_cells = c(2, 5, 15, 22)
+  T_cells = c(0, 1, 4, 7, 8, 10, 12, 16, 17),
+  B_cells = c(2, 5, 14, 23),
+  myeloid = c(3, 6, 9, 11, 13, 15, 16, 18, 19, 20, 21, 22)
 )
 
 for (i in names(sub.clusters)){

@@ -1,0 +1,338 @@
+---
+title: "CellChat analysis, one sample `r params$sample.id`"
+author:
+  - "trnguyen@ukaachen.de"
+date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    keep_md: no
+    df_print: paged
+    toc: true
+    toc_float:
+      toc_collapsed: false
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
+params:
+  sample.id: NA
+  path.to.s.obj: NA
+  path.to.save.output: NA
+  filter10cells: NA
+---
+
+
+```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+ $(document).ready(function() {
+    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+    // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+<style type="text/css">
+    div.datatables { height: auto !important;}
+</style>
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
+if ("CellChat" %in% row.names(installed.packages()) == FALSE){
+  devtools::install_github("immunogenomics/presto", upgrade = "never")
+  devtools::install_github("jinworks/CellChat", upgrade = "never")
+   # devtools::install_github("sqjin/CellChat", upgrade = "never")
+} 
+print("CellChat is already installed!")
+library(patchwork)
+options(stringsAsFactors = FALSE)
+library("CellChat")
+  
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
+source(file.path(scrna_pipeline_src, "import_libraries.R"))
+source(file.path(scrna_pipeline_src, "helper_functions.R"))
+
+# sample.id <- params$sample.id
+# path.to.s.obj <- params$path.to.s.obj
+# path.to.save.output <- params$path.to.save.output
+# filter10cells <- params$filter10cells
+
+sample.id <- "d7_SPF"
+path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+path.to.save.output <- file.path("/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_SeuratV5/data_analysis/14_output/all.samples/", sample.id)
+filter10cells <- "Filter10"
+
+s.obj <- readRDS(path.to.s.obj)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
+s.obj.original <- s.obj
+
+s.obj <- subset(s.obj, name == sample.id)
+
+#####----------------------------------------------------------------------#####
+##### LIST OF GENES AFTER REMOVING TRA/TRB/TRD/TRG GENES
+#####----------------------------------------------------------------------#####
+DefaultAssay(s.obj) <- "RNA"
+TR_genes_patterns <- c("Trav", "Traj", "Trac", "Trbv", "Trbd", "Trbj", "Trbc",
+                             "Trgv", "Trgj", "Trgc", "Trdv", "Trdc", "Trdj") 
+all_genes <- row.names(s.obj)
+genes.to.exclude <- unlist(lapply(all_genes, function(x){
+      if (substr(x, 1, 4) %in% TR_genes_patterns){
+        return(x)
+      } else {
+        return(NA)
+      }
+}))
+genes.to.exclude <- subset(genes.to.exclude, is.na(genes.to.exclude) == FALSE)
+genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
+
+data.matrix <- GetAssayData(object = s.obj, assay = "RNA", slot = "data")
+```
+
+# Dataset overview
+
+## All samples
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj.original, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE)
+```
+
+## Only 1 sample
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, repel = TRUE) +
+  ggtitle(sprintf("Sample %s", sample.id))
+```
+
+# Basic Data analysis
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+##### Get the input data matrix
+data.input <- GetAssayData(object = s.obj, slot = "data", assay = "RNA")
+meta.data <- s.obj@meta.data %>% 
+  rownames_to_column("barcode") %>%
+  rowwise() %>%
+  mutate(cluster = sprintf("cluster_%s", seurat_clusters)) %>%
+  column_to_rownames("barcode")
+num.cluster <- length(unique(s.obj$seurat_clusters))
+
+all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$seurat_clusters)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
+
+meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
+cellchat <- createCellChat(object = data.input, meta = meta.data, group.by = "cluster")
+
+##### Some preprocessing steps for the cellchat object
+cellchat <- addMeta(cellchat, meta = meta.data)
+cellchat <- setIdent(cellchat, ident.use = "cluster") # set "labels" as default cell identity
+groupSize <- table(cellchat@idents) %>% as.data.frame() # number of cells in each cell group
+groupSize %>% create_dt()
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+##### Define the CELLCHAT DATABASE IN USE
+CellChatDB <- CellChatDB.mouse
+showDatabaseCategory(CellChatDB)
+```
+
+This dataframe shows all available interaction in the current CellChat (mouse) database
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+CellChatDB$interaction %>% create_dt()
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+##### Subset or use everything in the CellChat database
+##### In this analysis, we use all available interactions
+if (file.exists(file.path(path.to.save.output, sprintf("CellChat_object.%s.%s.rds", sample.id, filter10cells))) == FALSE){
+  # CellChatDB.use <- subsetDB(CellChatDB, search = "Secreted Signaling") # use Secreted Signaling
+  CellChatDB.use <- CellChatDB # simply use the default CellChatDB
+  
+  # Remove the interaction H2-BI and H2-Ea-ps
+  CellChatDB.use[["interaction"]] <- CellChatDB.use[["interaction"]][-which(CellChatDB.use[["interaction"]]$ligand == "H2-BI"),]
+  CellChatDB.use[["interaction"]] <- CellChatDB.use[["interaction"]][-which(CellChatDB.use[["interaction"]]$ligand == "H2-Ea-ps"),]
+  
+  cellchat@DB <- CellChatDB.use
+  
+  # subset the expression data of signaling genes for saving computation cost
+  cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+  
+  ##### Run parallelly
+  future::plan("multiprocess", workers = 10) # do parallel
+  
+  ##### Preprocessing the expression data matrix for cell-cell communication analysis
+  cellchat <- identifyOverExpressedGenes(cellchat)
+  cellchat <- identifyOverExpressedInteractions(cellchat)
+  
+  ##### Compute the communication probability and infer cellular communication network
+  cellchat <- computeCommunProb(cellchat)
+  if (filter10cells == "Filter10"){
+    cellchat <- filterCommunication(cellchat, min.cells = 10)
+  }
+    
+  ##### Infer the cell-cell communication at a signaling pathway level
+  cellchat <- computeCommunProbPathway(cellchat)
+  
+  ##### Calculate the aggregated cell-cell communication network
+  cellchat <- aggregateNet(cellchat)
+  
+  saveRDS(object = cellchat, file = file.path(path.to.save.output, sprintf("CellChat_object.%s.%s.rds", sample.id, filter10cells)))
+} else {
+  cellchat <- readRDS(file.path(path.to.save.output, sprintf("CellChat_object.%s.%s.rds", sample.id, filter10cells)))
+}
+```
+
+## Table: Signal between each pair of clusters
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+mat.weight <- cellchat@net$weight
+mat.count <- cellchat@net$count
+
+matP.weight <- cellchat@netP$prob
+```
+
+### Counts
+The number of interactions between any two cell groups  (row --> column, row: source, column: target)
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+mat.count %>% create_dt()
+```
+
+### Weights
+The total reaction strength - weights. Weights are proportional to the interaction strength.
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+mat.weight %>% create_dt()
+```
+
+# Visualization: interactions
+## Aggregated interaction network between all clusters {.tabset}
+
+(not really informative!)
+
+### The number of interactions (counts)
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+groupSize <- as.numeric(table(cellchat@idents))
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_circle(mat.count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+```
+
+### The strength of interactions (weights)
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+netVisual_circle(mat.weight, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Interaction weights/strength")
+```
+
+## Sent signals from each cell group
+Since it is difficult to interpret the interactions on the above aggregated plots, here we show the strength of signals sent from each cluster to the others. Thicker edge line indicates a stronger signal. In the Circle plot below, circle sizes are proportional to the number of cells in each cluster. 
+
+The weights can be compared globally between clusters; for example, if the line connecting cluster 0 and cluster 10 in the plot `cluster 0` is **thicker** than the line connecting cluster 1 and cluster 10, we can say that the sending signal from 0 --> 10 is **stronger** than 1 --> 10.  
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+par(mfrow = c(2, 2), xpd=TRUE)
+for (i in 1:nrow(mat.weight)) {
+  mat2 <- matrix(0, nrow = nrow(mat.weight), ncol = ncol(mat.weight), dimnames = dimnames(mat.weight))
+  mat2[i, ] <- mat.weight[i, ]
+  mat2[i, i] <- 0
+  strength <- mat2[i, ] %>% sort() %>% tail(5)
+  strength <- strength[strength != 0]
+  names(strength) <- to_vec(for (item in names(strength)) str_replace(item, "cluster_", ""))
+  title <- sprintf("Top 5 highest signals from cluster %s: %s", rownames(mat.weight)[i], paste(names(strength), collapse = ", "))
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat.weight), title.name = title, arrow.size = 1)
+}
+```
+
+## Received signals from each cell group
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+par(mfrow = c(2, 2), xpd=TRUE)
+for (i in 1:nrow(mat.weight)) {
+  mat2 <- matrix(0, nrow = nrow(mat.weight), ncol = ncol(mat.weight), dimnames = dimnames(mat.weight))
+  mat2[, i] <- mat.weight[, i]
+  mat2[i, i] <- 0
+  strength <- mat2[, i] %>% sort() %>% tail(5) 
+  strength <- strength[strength != 0]
+  names(strength) <- to_vec(for (item in names(strength)) str_replace(item, "cluster_", ""))
+  title <- sprintf("Top 5 highest signals to cluster %s: %s", rownames(mat.weight)[i], paste(names(strength), collapse = ", "))
+  netVisual_circle(mat2, vertex.weight = groupSize, weight.scale = T, edge.weight.max = max(mat.weight), title.name = title, arrow.size = 1)
+}
+
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+all.pathways <- cellchat@netP$pathways
+sprintf("Total number of pathways: %s", length(all.pathways))
+print(all.pathways)
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+interaction.on.pathways <- hash()
+for (pathway in all.pathways){
+  interaction.on.pathways[[pathway]] <- cellchat@netP$prob[, , pathway]
+}
+```
+
+## Visualization on pathway levels, sent signals {.tabset}
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+all.clusters <- row.names(mat.weight)
+# for (cluster.id in c("cluster_0", "cluster_2", "cluster_5", "cluster_6")){
+for (cluster.id in all.clusters){
+  par(mfrow = c(3, 3))
+  cat(sprintf("### %s \n", cluster.id))
+  
+  for (pathway in all.pathways){
+    netVisual_aggregate(cellchat, signaling = c(pathway), layout = "circle", sources.use = c(cluster.id), targets.use = setdiff(row.names(mat.weight), c(cluster.id)),
+                        arrow.size = 1) 
+  }
+  cat("\n \n")
+}
+
+```
+## Visualization on pathway levels, received signals {.tabset}
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+
+# for (cluster.id in c("cluster_0", "cluster_2", "cluster_5", "cluster_6")){
+for (cluster.id in all.clusters){
+  par(mfrow = c(3, 3))
+  cat(sprintf("### %s \n", cluster.id))
+  
+  for (pathway in all.pathways){
+    netVisual_aggregate(cellchat, signaling = c(pathway), layout = "circle", targets.use= c(cluster.id), sources.use = setdiff(row.names(mat.weight), c(cluster.id)),
+                        arrow.size = 1) 
+  }
+  cat("\n \n")
+}
+
+```
+
+## Heatmap
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+groups <- split(all.pathways, seq(1, 7))
+
+for (group in names(groups)){
+  cat(sprintf("### Group %s {.tabset} \n \n", group))
+  cat("\n \n")
+  for (pathway in groups[[group]]){
+    cat(sprintf("#### Pathway: %s \n", pathway))
+    p <- netVisual_heatmap(cellchat, signaling = c(pathway), color.heatmap = "Reds")
+    print(p)
+    cat("\n \n")
+  }
+}
+```
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+```
+

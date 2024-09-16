@@ -117,6 +117,7 @@ print(sprintf("Sample 2: %s", sample2))
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 s.obj <- readRDS(path.to.s.obj)
+s.obj.original <- s.obj
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
@@ -781,23 +782,13 @@ for(cluster.id in all.cluster.ids){
 library(DESeq2)
 s.obj.full <- s.obj.original
 
-count.mtx.foxp3 <- GetAssayData(s.obj.full, slot = "counts", assay = "SCT")["Foxp3", ]
-
-if (foxp3 == "positive"){
-  foxp3.cells <- names(count.mtx.foxp3[count.mtx.foxp3 > 0])
-  s.obj.full <- subset(s.obj.full, cells = foxp3.cells)
-} else if (foxp3 == "zero") {
-  foxp3.cells <- names(count.mtx.foxp3[count.mtx.foxp3 == 0])
-  s.obj.full <- subset(s.obj.full, cells = foxp3.cells)
-}
-
 s.obj <- hash()
 s.obj[[sample1]] <- subset(s.obj.full, name == sample1)
 s.obj[[sample2]] <- subset(s.obj.full, name == sample2)
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-DimPlot(object = subset(s.obj.full, name %in% c(sample1, sample2)), reduction = "INTE_UMAP", label = TRUE, split.by = "name", ncol = 2)
+DimPlot(object = subset(s.obj.full, name %in% c(sample1, sample2)), reduction = "cca_UMAP", label = TRUE, split.by = "name", ncol = 2)
 ```
 
 
@@ -904,7 +895,7 @@ resdf.sigOnly %>% mutate_if(is.numeric, round, 8) %>% create_dt()
 
 ## Scaled z-score pseudobulk gene expression, all DE genes
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2, foxp3)))
+writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2)))
 ```
 
 

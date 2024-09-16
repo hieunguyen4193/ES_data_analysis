@@ -16,8 +16,7 @@ options(future.globals.maxSize = 10000 * 1024^2)
 # integration.case <- "remove_d4_LPS"
 # regression.mode <- "CC_differences"
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-outdir2 <- "/home/hieunguyen/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 integration.config <- list(
   all.samples = c("adult_GF",
@@ -78,7 +77,6 @@ filter.mode <- "nCount_and_BCR_TCRgenes"
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
 
-path.to.main.output2 <- file.path(outdir2, PROJECT, "data_analysis")
 integrate.samples <- integration.config[[integration.case]]
 
 num.PCA <- 25
@@ -90,8 +88,8 @@ use.sctransform <- TRUE
 vars.to.regress <- c("percent.mt", cell.cycle.features[[regression.mode]])
 cluster.resolution <- 0.5
 
-for (subcluster.name in c("b_cells", "lymphoids", "myeloids")){
-  path.to.12.output <- file.path(path.to.main.output2, "12_output", integration.case, regression.mode, filter.mode, subcluster.name)
+for (subcluster.name in c("T_cells", "B_cells", "myeloid")){
+  path.to.12.output <- file.path(path.to.main.output, "12_output", integration.case, regression.mode, filter.mode, subcluster.name)
   dir.create(path.to.12.output, showWarnings = FALSE, recursive = TRUE)
   
   path.to.s.obj <- file.path(path.to.main.output2, "11_output", integration.case, regression.mode, filter.mode, sprintf("subcluster_%s.rds", subcluster.name))
