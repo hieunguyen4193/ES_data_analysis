@@ -49,13 +49,11 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 if ("CellChat" %in% row.names(installed.packages()) == FALSE){
   devtools::install_github("immunogenomics/presto", upgrade = "never")
   devtools::install_github("jinworks/CellChat", upgrade = "never")
-   # devtools::install_github("sqjin/CellChat", upgrade = "never")
 } 
 print("CellChat is already installed!")
 library(patchwork)
 options(stringsAsFactors = FALSE)
 library("CellChat")
-  
 ```
 
 
@@ -80,7 +78,6 @@ s.obj <- readRDS(path.to.s.obj)
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
 s.obj.original <- s.obj
-
 s.obj <- subset(s.obj, name == sample.id)
 
 #####----------------------------------------------------------------------#####
@@ -169,7 +166,7 @@ if (file.exists(file.path(path.to.save.output, sprintf("CellChat_object.%s.%s.rd
   cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
   
   ##### Run parallelly
-  future::plan("multiprocess", workers = 10) # do parallel
+  future::plan("multicore", workers = 10) # do parallel
   
   ##### Preprocessing the expression data matrix for cell-cell communication analysis
   cellchat <- identifyOverExpressedGenes(cellchat)
