@@ -92,7 +92,7 @@ for (subcluster.name in c("T_cells", "B_cells", "myeloid")){
   path.to.12.output <- file.path(path.to.main.output, "12_output", integration.case, regression.mode, filter.mode, subcluster.name)
   dir.create(path.to.12.output, showWarnings = FALSE, recursive = TRUE)
   
-  path.to.s.obj <- file.path(path.to.main.output2, "11_output", integration.case, regression.mode, filter.mode, sprintf("subcluster_%s.rds", subcluster.name))
+  path.to.s.obj <- file.path(path.to.main.output, "11_output", integration.case, regression.mode, filter.mode, sprintf("subcluster_%s.rds", subcluster.name))
   
   s.obj <- readRDS(path.to.s.obj)
   

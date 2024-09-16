@@ -120,11 +120,11 @@ data.input <- GetAssayData(object = s.obj, slot = "data", assay = "SCT")
 meta.data <- s.obj@meta.data %>% 
   rownames_to_column("barcode") %>%
   rowwise() %>%
-  mutate(cluster = sprintf("cluster_%s", seurat_clusters)) %>%
+  mutate(cluster = sprintf("cluster_%s", cca.cluster.0.5)) %>%
   column_to_rownames("barcode")
-num.cluster <- length(unique(s.obj$seurat_clusters))
+num.cluster <- length(unique(s.obj$cca.cluster.0.5))
 
-all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$seurat_clusters)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
+all.cluster.idx <- to_vec (for (cluster.id in unique(s.obj$cca.cluster.0.5)) str_replace(cluster.id, "cluster_", "")) %>% as.numeric()
 
 meta.data$cluster <- factor(meta.data$cluster, levels = to_vec ( for (i in sort(all.cluster.idx)) sprintf("cluster_%s", i) ))
 cellchat <- createCellChat(object = data.input, meta = meta.data, group.by = "cluster")
@@ -148,7 +148,6 @@ This dataframe shows all available interaction in the current CellChat (mouse) d
 CellChatDB$interaction %>% create_dt()
 ```
 
-
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 ##### Subset or use everything in the CellChat database
 ##### In this analysis, we use all available interactions
@@ -157,8 +156,8 @@ if (file.exists(file.path(path.to.save.output, sprintf("CellChat_object.%s.%s.rd
   CellChatDB.use <- CellChatDB # simply use the default CellChatDB
   
   # Remove the interaction H2-BI and H2-Ea-ps
-  CellChatDB.use[["interaction"]] <- CellChatDB.use[["interaction"]][-which(CellChatDB.use[["interaction"]]$ligand == "H2-BI"),]
-  CellChatDB.use[["interaction"]] <- CellChatDB.use[["interaction"]][-which(CellChatDB.use[["interaction"]]$ligand == "H2-Ea-ps"),]
+  # CellChatDB.use[["interaction"]] <- CellChatDB.use[["interaction"]][-which(CellChatDB.use[["interaction"]]$ligand == "H2-BI"),]
+  # CellChatDB.use[["interaction"]] <- CellChatDB.use[["interaction"]][-which(CellChatDB.use[["interaction"]]$ligand == "H2-Ea-ps"),]
   
   cellchat@DB <- CellChatDB.use
   
