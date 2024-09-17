@@ -30,10 +30,10 @@ samplesheets <- list(
  `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output.xlsx"))
 )
 
-input.samplesheet <- samplesheets[[output.index]]
 comparison.samplesheet <- read.csv(file.path(path.to.main.src, src.dir, "sample_comparision_list.csv"))
 
 for (output.index in names(samplesheets)){
+  input.samplesheet <- samplesheets[[output.index]]
   for (i in seq(1, nrow(input.samplesheet))){
     for (j in seq(1, nrow(comparison.samplesheet))){
       sample1 <- comparison.samplesheet[j, ][["sample1"]]

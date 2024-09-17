@@ -88,10 +88,11 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-# sample1 <- params$sample1
-# sample2 <- params$sample2
-# path.to.s.obj <- params$path.to.s.obj 
-# path.to.save.output <- params$path.to.save.output
+sample1 <- params$sample1
+sample2 <- params$sample2
+path.to.s.obj <- params$path.to.s.obj
+path.to.save.output <- params$path.to.save.output
+dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
 library(clusterProfiler)
 if (packageVersion("org.Mm.eg.db") != "3.19.1"){
@@ -102,10 +103,10 @@ if (packageVersion("org.Mm.eg.db") != "3.19.1"){
 }
 library(org.Mm.eg.db)
 
-sample1 <- "d7_SPF"
-sample2 <- "adult_SPF"
-path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_SeuratV5/data_analysis/13_output/all.samples/adult_SPF_d7_SPF"
+# sample1 <- "d7_SPF"
+# sample2 <- "adult_SPF"
+# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_SeuratV5/data_analysis/13_output/all.samples/adult_SPF_d7_SPF"
 
 ```
 

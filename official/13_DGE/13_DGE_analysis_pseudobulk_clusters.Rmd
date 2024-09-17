@@ -94,6 +94,9 @@ sample2 <- params$sample2
 cluster.id <- params$cluster.id
 path.to.s.obj <- params$path.to.s.obj
 path.to.save.output <- params$path.to.save.output
+cluster.id <- params$cluster.id
+
+dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
 # sample1 <- "d7_SPF"
 # sample2 <- "adult_SPF"
