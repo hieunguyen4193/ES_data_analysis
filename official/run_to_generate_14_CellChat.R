@@ -37,9 +37,23 @@ samplesheets <- list(
   `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output_simplified.xlsx"))
 )
 
-for (output.index in names(samplesheets)){
-  input.samplesheet <- samplesheets[[output.index]]
-  for (row_i in seq(1, nrow(input.samplesheet))){
+all.samples <- c("adult_GF",
+                 "adult_SPF",
+                 "d10_SPF",
+                 "d15_SPF",
+                 "d20_SPF",
+                 "d4_GF",
+                 "d4_SPF",
+                 "d7_GF",
+                 "d7_SPF",
+                 "SC11",
+                 "SC12")
+
+filter10cells <- "Filter10"
+for (sample.id in all.samples){
+  for (output.index in names(samplesheets)){
+    input.samplesheet <- samplesheets[[output.index]]
+    for (row_i in seq(1, nrow(input.samplesheet))){
       if (output.index == "03_output"){
         integration.case <- input.samplesheet[row_i, ][["integration.case"]]
         path.to.s.obj <- input.samplesheet[row_i, ][["path"]]
@@ -51,10 +65,10 @@ for (output.index in names(samplesheets)){
         output.file.name <- sprintf("%s.CellChat_single_sample.html", sample.id)
         
         path.to.save.CellChat.output <- file.path(path.to.14.output, 
-                                             sprintf("from_%s", output.index), 
-                                             integration.case, 
-                                             sample.id, 
-                                             "part1")
+                                                  sprintf("from_%s", output.index), 
+                                                  integration.case, 
+                                                  sample.id, 
+                                                  "part1")
         
         input.params <- list(
           sample.id = sample.id,
@@ -94,9 +108,14 @@ for (output.index in names(samplesheets)){
       for (param.name in names(input.params)){
         print(sprintf("Param %s: %s", param.name, input.params[[param.name]]))
       }
-      rmarkdown::render(path.to.rmd,
-                        params = input.params,
-                        output_file = output.file.name,
-                        output_dir = path.to.save.html)    
+      if (file.exists(file.path(path.to.save.html, output.file.name)) == FALSE){
+        rmarkdown::render(path.to.rmd,
+                          params = input.params,
+                          output_file = output.file.name,
+                          output_dir = path.to.save.html)            
+      } else {
+        print(sprintf("File html %s already exists, not generating new file.", file.path(path.to.save.html, output.file.name)))
+      }
     }
   }
+}

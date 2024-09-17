@@ -37,14 +37,32 @@ comparison.samplesheet <- read.csv(file.path(path.to.main.src, src.dir, "sample_
 for (output.index in names(samplesheets)){
   input.samplesheet <- samplesheets[[output.index]]
   for (row_i in seq(1, nrow(input.samplesheet))){
-    num.clusters <- input.samplesheet[row_i, ][["num.clusters"]]
+    integration.case <- input.samplesheet[row_i, ][["integration.case"]]
+    path.to.s.obj <- input.samplesheet[row_i, ][["path"]]
+    s.obj <- readRDS(path.to.s.obj)
+    meta.data <- s.obj@meta.data %>%
+      rowwise() %>%
+      mutate(name_ht = sprintf("%s_%s", name, HTO_classification))
+    countdf <- table(meta.data$name_ht, s.obj$cca.cluster.0.5) %>% as.data.frame() %>%
+      subset(grepl("Hashtag", Var1) == TRUE) %>%
+      pivot_wider(names_from = "Var1", values_from = "Freq") %>% column_to_rownames("Var2")
+    
     for (j in seq(1, nrow(comparison.samplesheet))){
-      sample1 <- comparison.samplesheet[row_i, ][["sample1"]]
-      sample2 <- comparison.samplesheet[row_i, ][["sample2"]]
-        for (cluster.id in seq(1, num.clusters)){
+      sample1 <- comparison.samplesheet[j, ][["sample1"]]
+      sample2 <- comparison.samplesheet[j, ][["sample2"]]
+      countdf$count.sample1 <- unlist(lapply(
+        row.names(countdf), function(x){
+          to_vec(for (item in names(countdf[x, ])) if(grepl(sample1, item) & countdf[x, ][[item]] != 0) item) %>% length()
+        }
+      )) 
+      countdf$count.sample2 <- unlist(lapply(
+        row.names(countdf), function(x){
+          to_vec(for (item in names(countdf[x, ])) if(grepl(sample2, item) & countdf[x, ][[item]] != 0) item) %>% length()
+        }
+      )) 
+      available.clusters <- row.names(subset(countdf, countdf$count.sample1 > 1 & countdf$count.sample2 > 1))
+        for (cluster.id in available.clusters){
           if (output.index == "03_output"){
-            integration.case <- input.samplesheet[row_i, ][["integration.case"]]
-            path.to.s.obj <- input.samplesheet[row_i, ][["path"]]
             path.to.save.html <- file.path(output.dir, 
                                            sprintf("from_%s", output.index), 
                                            integration.case, 
@@ -97,6 +115,9 @@ for (output.index in names(samplesheets)){
             )
           }
           dir.create(path.to.save.html, showWarnings = FALSE, recursive = TRUE)
+          for (param.name in names(input.params)){
+            print(sprintf("Param %s: %s", param.name, input.params[[param.name]]))
+          }
           rmarkdown::render(path.to.rmd,
                             params = input.params,
                             output_file = output.file.name,

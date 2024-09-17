@@ -36,8 +36,8 @@ for (output.index in names(samplesheets)){
   input.samplesheet <- samplesheets[[output.index]]
   for (row_i in seq(1, nrow(input.samplesheet))){
     for (j in seq(1, nrow(comparison.samplesheet))){
-      sample1 <- comparison.samplesheet[row_i, ][["sample1"]]
-      sample2 <- comparison.samplesheet[row_i, ][["sample2"]]
+      sample1 <- comparison.samplesheet[j, ][["sample1"]]
+      sample2 <- comparison.samplesheet[j, ][["sample2"]]
       
       if (output.index == "03_output"){
         integration.case <- input.samplesheet[row_i, ][["integration.case"]]
