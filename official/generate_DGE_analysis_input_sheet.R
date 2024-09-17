@@ -22,12 +22,12 @@ tmp.03.output <- data.frame(
   path = all.03.results
 )
 
-tmp.03.output[["num.clusters"]] <- unlist(
-  lapply(tmp.03.output$path, function(x){
-    tmp.s.obj <- readRDS(x)
-    return(length(unique(tmp.s.obj$cca.cluster.0.5)))
-  })
-)
+# tmp.03.output[["num.clusters"]] <- unlist(
+#   lapply(tmp.03.output$path, function(x){
+#     tmp.s.obj <- readRDS(x)
+#     return(length(unique(tmp.s.obj$cca.cluster.0.5)))
+#   })
+# )
 writexl::write_xlsx(tmp.03.output, file.path(path.to.save.samplesheet, "SampleSheet_03_output.xlsx"))
 
 ##### get s.obj objects from the 10 output
@@ -39,10 +39,22 @@ tmp.10.output <- data.frame(
   filter.mode = to_vec( for(item in all.10.results) str_split(item, "/")[[1]][[12]]),
   path = all.10.results
 )
-tmp.10.output[["num.clusters"]] <- unlist(
-  lapply(tmp.10.output$path, function(x){
-    tmp.s.obj <- readRDS(x)
-    return(length(unique(tmp.s.obj$cca.cluster.0.5)))
-  })
-)
+# tmp.10.output[["num.clusters"]] <- unlist(
+#   lapply(tmp.10.output$path, function(x){
+#     tmp.s.obj <- readRDS(x)
+#     return(length(unique(tmp.s.obj$cca.cluster.0.5)))
+#   })
+# )
 writexl::write_xlsx(tmp.10.output, file.path(path.to.save.samplesheet, "SampleSheet_10_output.xlsx"))
+
+##### get s.obj objects from the 12 output
+all.12.results <- Sys.glob(file.path(path.to.main.output, "12_output", "*", "*", "*", "*", "s8_output", "*.rds"))
+tmp.12.output <- data.frame(
+  output_index = c("12_output"),
+  integration.case = to_vec( for(item in all.12.results) str_split(item, "/")[[1]][[10]]),
+  regression.mode = to_vec( for(item in all.12.results) str_split(item, "/")[[1]][[11]]),
+  filter.mode = to_vec( for(item in all.12.results) str_split(item, "/")[[1]][[12]]),
+  sub.cluster.id = to_vec( for(item in all.12.results) str_split(item, "/")[[1]][[13]]),
+  path = all.12.results
+)
+writexl::write_xlsx(tmp.10.output, file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx"))

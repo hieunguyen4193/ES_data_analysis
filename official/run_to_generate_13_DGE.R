@@ -27,7 +27,8 @@ dir.create(output.dir, showWarnings = FALSE, recursive = TRUE)
 
 samplesheets <- list(
  `03_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_03_output_simplified.xlsx")),
- `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output_simplified.xlsx"))
+ `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output_simplified.xlsx")),
+ `12_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx"))
 )
 
 comparison.samplesheet <- read.csv(file.path(path.to.main.src, src.dir, "sample_comparision_list.csv"))
@@ -64,6 +65,36 @@ for (output.index in names(samplesheets)){
         output.file.name <- sprintf("%s_vs_%s.part1.html", sample1, sample2)
         
         path.to.save.DGE.output <- file.path(path.to.13.output, sprintf("from_%s", output.index), integration.case, regression.mode, filter.mode, sprintf("%s_%s", sample1, sample2), "part1")
+        
+        input.params <- list(
+          sample1 = sample1,
+          sample2 = sample2,
+          path.to.s.obj = path.to.s.obj,
+          path.to.save.output = path.to.save.DGE.output
+        )
+      } else if (output.index == "12_output"){
+        integration.case <- input.samplesheet[row_i, ][["integration.case"]]
+        regression.mode <- input.samplesheet[row_i, ][["regression.mode"]]
+        filter.mode <- input.samplesheet[row_i, ][["filter.mode"]]
+        path.to.s.obj <- input.samplesheet[row_i, ][["path"]]
+        sub.cluster.id <- input.samplesheet[row_i, ][["sub.cluster.id"]]
+        
+        path.to.save.html <- file.path(output.dir, 
+                                       sprintf("from_%s", output.index), 
+                                       integration.case, 
+                                       regression.mode, 
+                                       filter.mode,
+                                       sub.cluster.id,
+                                       sprintf("%s_%s", sample1, sample2))
+        output.file.name <- sprintf("%s_vs_%s.part1.html", sample1, sample2)
+        
+        path.to.save.DGE.output <- file.path(path.to.13.output, 
+                                             sprintf("from_%s", output.index), 
+                                             integration.case, 
+                                             regression.mode, 
+                                             filter.mode, 
+                                             sub.cluster.id,
+                                             sprintf("%s_%s", sample1, sample2), "part1")
         
         input.params <- list(
           sample1 = sample1,
