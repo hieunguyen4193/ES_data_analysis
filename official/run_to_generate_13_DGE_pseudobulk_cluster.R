@@ -21,13 +21,13 @@ source(file.path(path.to.pipeline.src, "processes_src", "import_libraries.R"))
 source(file.path(path.to.pipeline.src, "processes_src", "helper_functions.R"))
 
 src.dir <- "13_DGE"
-path.to.rmd <- file.path(path.to.main.src, src.dir, "13_DGE_analysis.Rmd")
+path.to.rmd <- file.path(path.to.main.src, src.dir, "13_DGE_analysis_pseudobulk_clusters.Rmd")
 output_dir <- file.path(path.to.save.html, "13_output")
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 samplesheets <- list(
- `03_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_03_output.xlsx")),
- `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output.xlsx"))
+  `03_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_03_output.xlsx")),
+  `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output.xlsx"))
 )
 
 input.samplesheet <- samplesheets[[output.index]]
@@ -43,10 +43,17 @@ for (output.index in names(samplesheets)){
         integration.case <- input.samplesheet[i, ][["integration.case"]]
         path.to.s.obj <- input.samplesheet[i, ][["path"]]
         
-        path.to.save.html <- file.path(output_dir, sprintf("from_%s", output.index), integration.case, sprintf("%s_%s", sample1, sample2))
-        output.file.name <- sprintf("%s_vs_%s.part1.html", sample1, sample2)
+        path.to.save.html <- file.path(output_dir, 
+                                       sprintf("from_%s", output.index), 
+                                       integration.case, 
+                                       sprintf("%s_%s", sample1, sample2))
+        output.file.name <- sprintf("%s_vs_%s.part2.html", sample1, sample2)
         
-        path.to.save.DGE.output <- file.path(path.to.13.output, sprintf("from_%s", output.index), integration.case, sprintf("%s_%s", sample1, sample2), "part1")
+        path.to.save.DGE.output <- file.path(path.to.13.output, 
+                                             sprintf("from_%s", output.index), 
+                                             integration.case, 
+                                             sprintf("%s_%s", sample1, sample2), 
+                                             "part2")
         dir.create(path.to.save.DGE.output, showWarnings = FALSE, recursive = TRUE)
         
         input.params <- list(
@@ -61,10 +68,20 @@ for (output.index in names(samplesheets)){
         filter.mode <- input.samplesheet[i, ][["filter.mode"]]
         path.to.s.obj <- input.samplesheet[i, ][["path"]]
         
-        path.to.save.html <- file.path(output_dir, sprintf("from_%s", output.index), integration.case, regression.mode, filter.mode, sprintf("%s_%s", sample1, sample2))
-        output.file.name <- sprintf("%s_vs_%s.part1.html", sample1, sample2)
+        path.to.save.html <- file.path(output_dir, sprintf("from_%s", output.index), 
+                                       integration.case, 
+                                       regression.mode, 
+                                       filter.mode, 
+                                       sprintf("%s_%s", sample1, sample2))
+        output.file.name <- sprintf("%s_vs_%s.part2.html", sample1, sample2)
         
-        path.to.save.DGE.output <- file.path(path.to.13.output, sprintf("from_%s", output.index), integration.case, regression.mode, filter.mode, sprintf("%s_%s", sample1, sample2), "part1")
+        path.to.save.DGE.output <- file.path(path.to.13.output, 
+                                             sprintf("from_%s", output.index), 
+                                             integration.case, 
+                                             regression.mode, 
+                                             filter.mode, 
+                                             sprintf("%s_%s", sample1, sample2), 
+                                             "part2")
         dir.create(path.to.save.DGE.output, showWarnings = FALSE, recursive = TRUE)
         
         input.params <- list(

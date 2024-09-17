@@ -1,5 +1,5 @@
 ---
-title: "CellChat analysis, one sample `r params$sample.id`"
+title: "CellChat analysis, one sample `r params$sample.id`, filter 10 cells `r params$filter10cells`"
 author:
   - "trnguyen@ukaachen.de"
 date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
@@ -322,7 +322,18 @@ for (group in names(groups)){
   cat("\n \n")
   for (pathway in groups[[group]]){
     cat(sprintf("#### Pathway: %s \n", pathway))
-    p <- netVisual_heatmap(cellchat, signaling = c(pathway), color.heatmap = "Reds")
+    tryCatch(
+        {
+          p <- netVisual_heatmap(cellchat, signaling = c(pathway), color.heatmap = "Reds")
+          return(p)
+        },
+        error=function(e) {
+            p <- ggplot() + ggtitle("No data to generate heatmap for this pathway")
+            return(p)
+        }
+    )
+    
+    
     print(p)
     cat("\n \n")
   }
