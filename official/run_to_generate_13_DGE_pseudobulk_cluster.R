@@ -22,28 +22,30 @@ source(file.path(path.to.pipeline.src, "processes_src", "helper_functions.R"))
 
 src.dir <- "13_DGE"
 path.to.rmd <- file.path(path.to.main.src, src.dir, "13_DGE_analysis_pseudobulk_clusters.Rmd")
-output_dir <- file.path(path.to.save.html, "13_output")
-dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+output.dir <- file.path(path.to.save.html, "13_output")
+dir.create(output.dir, showWarnings = FALSE, recursive = TRUE)
 
 samplesheets <- list(
   `03_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_03_output.xlsx")),
   `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output.xlsx"))
 )
 
+#####----------------------------------------------------------------------------#####
+
 comparison.samplesheet <- read.csv(file.path(path.to.main.src, src.dir, "sample_comparision_list.csv"))
 
 for (output.index in names(samplesheets)){
   input.samplesheet <- samplesheets[[output.index]]
-  for (i in seq(1, nrow(input.samplesheet))){
-    num.clusters <- input.samplesheet[i, ][["num.clusters"]]
+  for (row_i in seq(1, nrow(input.samplesheet))){
+    num.clusters <- input.samplesheet[row_i, ][["num.clusters"]]
     for (j in seq(1, nrow(comparison.samplesheet))){
-      sample1 <- comparison.samplesheet[j, ][["sample1"]]
-      sample2 <- comparison.samplesheet[j, ][["sample2"]]
+      sample1 <- comparison.samplesheet[row_i, ][["sample1"]]
+      sample2 <- comparison.samplesheet[row_i, ][["sample2"]]
         for (cluster.id in seq(1, num.clusters)){
           if (output.index == "03_output"){
-            integration.case <- input.samplesheet[i, ][["integration.case"]]
-            path.to.s.obj <- input.samplesheet[i, ][["path"]]
-            path.to.save.html <- file.path(output_dir, 
+            integration.case <- input.samplesheet[row_i, ][["integration.case"]]
+            path.to.s.obj <- input.samplesheet[row_i, ][["path"]]
+            path.to.save.html <- file.path(output.dir, 
                                            sprintf("from_%s", output.index), 
                                            integration.case, 
                                            sprintf("%s_%s", sample1, sample2),
@@ -56,8 +58,6 @@ for (output.index in names(samplesheets)){
                                                  sprintf("%s_%s", sample1, sample2), 
                                                  "part2",
                                                  sprintf("cluster_%s", cluster.id))
-            dir.create(path.to.save.DGE.output, showWarnings = FALSE, recursive = TRUE)
-            
             input.params <- list(
               sample1 = sample1,
               sample2 = sample2,
@@ -66,12 +66,12 @@ for (output.index in names(samplesheets)){
               cluster.id = cluster.id
             )
           } else if (output.index == "10_output"){
-            integration.case <- input.samplesheet[i, ][["integration.case"]]
-            regression.mode <- input.samplesheet[i, ][["regression.mode"]]
-            filter.mode <- input.samplesheet[i, ][["filter.mode"]]
-            path.to.s.obj <- input.samplesheet[i, ][["path"]]
+            integration.case <- input.samplesheet[row_i, ][["integration.case"]]
+            regression.mode <- input.samplesheet[row_i, ][["regression.mode"]]
+            filter.mode <- input.samplesheet[row_i, ][["filter.mode"]]
+            path.to.s.obj <- input.samplesheet[row_i, ][["path"]]
             
-            path.to.save.html <- file.path(output_dir, sprintf("from_%s", output.index), 
+            path.to.save.html <- file.path(output.dir, sprintf("from_%s", output.index), 
                                            integration.case, 
                                            regression.mode, 
                                            filter.mode, 
@@ -87,7 +87,6 @@ for (output.index in names(samplesheets)){
                                                  sprintf("%s_%s", sample1, sample2), 
                                                  "part2",
                                                  sprintf("cluster_%s", cluster.id))
-            dir.create(path.to.save.DGE.output, showWarnings = FALSE, recursive = TRUE)
             
             input.params <- list(
               sample1 = sample1,
@@ -97,10 +96,11 @@ for (output.index in names(samplesheets)){
               cluster.id = cluster.id
             )
           }
+          dir.create(path.to.save.html, showWarnings = FALSE, recursive = TRUE)
           rmarkdown::render(path.to.rmd,
                             params = input.params,
                             output_file = output.file.name,
-                            output_dir = path.to.save.html)    
+                            output_dir = path.to.save.html)
         }      
     }
   }

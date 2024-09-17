@@ -62,15 +62,15 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-# sample.id <- params$sample.id
-# path.to.s.obj <- params$path.to.s.obj
-# path.to.save.output <- params$path.to.save.output
-# filter10cells <- params$filter10cells
+sample.id <- params$sample.id
+path.to.s.obj <- params$path.to.s.obj
+path.to.save.output <- params$path.to.save.output
+filter10cells <- params$filter10cells
 
-sample.id <- "d7_SPF"
-path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-filter10cells <- "Filter10"
-path.to.save.output <- file.path("/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/all.samples", filter10cells, sample.id)
+# sample.id <- "d7_SPF"
+# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+# filter10cells <- "Filter10"
+# path.to.save.output <- file.path("/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/all.samples", filter10cells, sample.id)
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 s.obj <- readRDS(path.to.s.obj)
