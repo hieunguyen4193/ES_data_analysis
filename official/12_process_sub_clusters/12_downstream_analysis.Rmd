@@ -85,17 +85,15 @@ subcluster.name <- params$subcluster.name
 # filter.mode <- "nCount_and_BCR_TCRgenes"
 # subcluster.name <- "lymphoids"
 
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-outdir2 <- "/home/hieunguyen/CRC1382/outdir"
 
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
-path.to.main.output2 <- file.path(outdir2, PROJECT, "data_analysis")
 path.to.01.output <- file.path(path.to.main.output, "01_output")
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
-path.to.12.output <- file.path(path.to.main.output2, "12_output", integration.case, regression.mode, filter.mode, subcluster.name)
+path.to.12.output <- file.path(path.to.main.output, "12_output", integration.case, regression.mode, filter.mode, subcluster.name)
   
 path.to.s.obj <- file.path(path.to.12.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT))
 s.obj <- readRDS(path.to.s.obj)

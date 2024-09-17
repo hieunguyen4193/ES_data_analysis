@@ -109,9 +109,6 @@ if (packageVersion("org.Mm.eg.db") != "3.19.1"){
                    type = "source", repos = NULL)
 }
 library(org.Mm.eg.db)
-
-
-
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}

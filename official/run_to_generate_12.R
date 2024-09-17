@@ -5,7 +5,7 @@ gc()
 rm(list = ls())
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV5"
+PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
 path.to.main.output <- file.path(outdir, PROJECT)
 path.to.save.html <- file.path(path.to.main.output, "html_outputs")
@@ -77,7 +77,7 @@ integration.case <- "remove_d4_LPS_SC5"
 regression.mode <- "CC_differences"
 filter.mode <- "nCount_and_BCR_TCRgenes"
 
-for (subcluster.name in c("b_cells", "lymphoids", "myeloids")){
+for (subcluster.name in c("T_cells", "B_cells", "myeloid")){
   output_file <- str_replace(basename(path.to.rmd), ".Rmd", sprintf("%s.%s.%s.%s.html", subcluster.name, integration.case, regression.mode, filter.mode))
   print(sprintf("Working on %s - %s - %s - sub cluster: %s", filter.mode, regression.mode, integration.case, subcluster.name))
   if (file.exists(file.path(output_dir, output_file)) == FALSE){
