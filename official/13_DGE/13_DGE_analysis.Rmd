@@ -88,11 +88,11 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-sample1 <- params$sample1
-sample2 <- params$sample2
-path.to.s.obj <- params$path.to.s.obj
-path.to.save.output <- params$path.to.save.output
-dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
+# sample1 <- params$sample1
+# sample2 <- params$sample2
+# path.to.s.obj <- params$path.to.s.obj
+# path.to.save.output <- params$path.to.save.output
+# dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
 library(clusterProfiler)
 if (packageVersion("org.Mm.eg.db") != "3.19.1"){
@@ -103,10 +103,10 @@ if (packageVersion("org.Mm.eg.db") != "3.19.1"){
 }
 library(org.Mm.eg.db)
 
-# sample1 <- "d7_SPF"
-# sample2 <- "adult_SPF"
-# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_SeuratV5/data_analysis/13_output/all.samples/adult_SPF_d7_SPF"
+sample1 <- "d7_SPF"
+sample2 <- "d7_GF"
+path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/remove_d4_LPS_SC5/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/13_output/from_03_output/remove_d4_LPS_SC5/d7_SPF_d7_GF/part1"
 
 ```
 
@@ -126,7 +126,6 @@ all.genes.in.Mm.db <- AnnotationDbi::keys(org.Mm.eg.db, keytype = "SYMBOL")
 ```
 
 **In this analysis, we conduct the Differential gene expression analysis between sample** `r params$sample1` vs. `r params$sample2`  **in the dataset ** `r basename(params$path.to.s.obj)`**. We also removed TCR genes.**
-
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 TR_genes_patterns <- c("Trav", "Traj", "Trac", "Trbv", "Trbd", "Trbj", "Trbc",
@@ -304,12 +303,23 @@ for (cluster.id in all.clusters.in.de.markers){
     inputdf <- inputdf %>% subset(p_val_adj <= 0.05) %>% arrange(desc(avg_log2FC))
     top10up.genes <- inputdf %>% head(10)
     top10down.genes <- inputdf %>% tail(10)
-    p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "SCT")  
+    tryCatch(
+        {
+          p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
+                         features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "SCT")
+          return(p)
+        },
+        error=function(e) {
+            p <- ggplot() + ggtitle("No data to generate heatmap for this cluster")
+            return(p)
+        }
+    )
+    
+      
   }
   print(p)
   cat("\n \n")
 }
-
 
 ```
 

@@ -76,7 +76,6 @@ dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 s.obj <- readRDS(path.to.s.obj)
 ```
 
-
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
 s.obj.original <- s.obj
 s.obj <- subset(s.obj, name == sample.id)
@@ -339,7 +338,6 @@ for (group in names(groups)){
   }
 }
 ```
-
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 ```

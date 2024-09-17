@@ -26,8 +26,8 @@ output.dir <- file.path(path.to.save.html, "13_output")
 dir.create(output.dir, showWarnings = FALSE, recursive = TRUE)
 
 samplesheets <- list(
- `03_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_03_output.xlsx")),
- `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output.xlsx"))
+ `03_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_03_output_simplified.xlsx")),
+ `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output_simplified.xlsx"))
 )
 
 comparison.samplesheet <- read.csv(file.path(path.to.main.src, src.dir, "sample_comparision_list.csv"))
@@ -72,6 +72,9 @@ for (output.index in names(samplesheets)){
           path.to.save.output = path.to.save.DGE.output
         )
       }
+      for (param.name in names(input.params)){
+        print(sprintf("Param %s: %s", param.name, input.params[[param.name]]))
+      }
       rmarkdown::render(path.to.rmd,
                         params = input.params,
                         output_file = output.file.name,
@@ -79,4 +82,3 @@ for (output.index in names(samplesheets)){
     }
   }
 }
-
