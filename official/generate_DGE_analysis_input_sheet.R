@@ -21,6 +21,13 @@ tmp.03.output <- data.frame(
   integration.case = to_vec( for(item in all.03.results) str_split(item, "/")[[1]][[10]]),
   path = all.03.results
 )
+
+tmp.03.output[["num.clusters"]] <- unlist(
+  lapply(tmp.03.output$path, function(x){
+    tmp.s.obj <- readRDS(x)
+    return(length(unique(tmp.s.obj$cca.cluster.0.5)))
+  })
+)
 writexl::write_xlsx(tmp.03.output, file.path(path.to.save.samplesheet, "SampleSheet_03_output.xlsx"))
 
 ##### get s.obj objects from the 10 output
@@ -31,5 +38,11 @@ tmp.10.output <- data.frame(
   regression.mode = to_vec( for(item in all.10.results) str_split(item, "/")[[1]][[11]]),
   filter.mode = to_vec( for(item in all.10.results) str_split(item, "/")[[1]][[12]]),
   path = all.10.results
+)
+tmp.10.output[["num.clusters"]] <- unlist(
+  lapply(tmp.10.output$path, function(x){
+    tmp.s.obj <- readRDS(x)
+    return(length(unique(tmp.s.obj$cca.cluster.0.5)))
+  })
 )
 writexl::write_xlsx(tmp.10.output, file.path(path.to.save.samplesheet, "SampleSheet_10_output.xlsx"))
