@@ -72,7 +72,6 @@ if ("heatmaply" %in% installed.packages() == FALSE){
 }
 
 library(org.Mm.eg.db)
-# devtools::install_github("YuLab-SMU/yulab.utils", upgrade = "never")
 
 #####----------------------------------------------------------------------#####
 ##### UPGRADE THE CLUSTERPROFILER PACKAGES
