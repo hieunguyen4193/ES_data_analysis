@@ -44,12 +44,12 @@ output.file.name <- sprintf("%s_%s_%s_vs_%s.html", str_replace(basename(path.to.
 path.to.save.DGE.output <- file.path(path.to.13.output, integration.case, sprintf("%s_%s", sample1, sample2))
 dir.create(path.to.save.DGE.output, showWarnings = FALSE, recursive = TRUE)
 
-# rmarkdown::render(path.to.rmd, 
-#                   params = list(
-#                     sample1 = sample1, 
-#                     sample2 = sample2, 
-#                     path.to.s.obj = path.to.s.obj,
-#                     path.to.save.output = path.to.save.DGE.output
-#                   ),
-#                   output_file = output.file.name,
-#                   output_dir = path.to.save.html)
+rmarkdown::render(path.to.rmd,
+                  params = list(
+                    sample1 = sample1,
+                    sample2 = sample2,
+                    path.to.s.obj = path.to.s.obj,
+                    path.to.save.output = path.to.save.DGE.output
+                  ),
+                  output_file = output.file.name,
+                  output_dir = path.to.save.html)
