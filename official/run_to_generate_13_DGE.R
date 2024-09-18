@@ -106,10 +106,13 @@ for (output.index in names(samplesheets)){
       for (param.name in names(input.params)){
         print(sprintf("Param %s: %s", param.name, input.params[[param.name]]))
       }
-      rmarkdown::render(path.to.rmd,
-                        params = input.params,
-                        output_file = output.file.name,
-                        output_dir = path.to.save.html)    
+      
+      if (file.exists(file.path(path.to.save.html, output.file.name)) == FALSE){
+        rmarkdown::render(path.to.rmd,
+                          params = input.params,
+                          output_file = output.file.name,
+                          output_dir = path.to.save.html)           
+      }
     }
   }
 }

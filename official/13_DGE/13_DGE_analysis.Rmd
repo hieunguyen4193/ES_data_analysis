@@ -87,11 +87,17 @@ if (packageVersion("clusterProfiler") != "4.13.3"){
 scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
-
+# 
 sample1 <- params$sample1
 sample2 <- params$sample2
 path.to.s.obj <- params$path.to.s.obj
 path.to.save.output <- params$path.to.save.output
+
+# sample1 <- "adult_SPF"
+# sample2 <- "SC11"
+# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/remove_d4_LPS_SC5/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/13_output/from_03_output/remove_d4_LPS_SC5/adult_SPF_SC11/part1"
+
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
 library(clusterProfiler)
@@ -102,12 +108,6 @@ if (packageVersion("org.Mm.eg.db") != "3.19.1"){
                    type = "source", repos = NULL)
 }
 library(org.Mm.eg.db)
-
-# sample1 <- "d7_SPF"
-# sample2 <- "d7_GF"
-# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/remove_d4_LPS_SC5/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/13_output/from_03_output/remove_d4_LPS_SC5/d7_SPF_d7_GF/part1"
-
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}

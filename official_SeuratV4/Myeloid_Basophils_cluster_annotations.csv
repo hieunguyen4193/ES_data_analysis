@@ -1,0 +1,24 @@
+Cluster,CellType
+0,Neutrophils
+1,Neutrophils
+2,Proliferating Neutrophils
+3,Neutrophils
+4,Monocytes
+5,Proliferating Monocytes
+6,pDC
+7,Intermediate Neutrophils
+8,Progenitors
+9,Macrophages
+10,cDC1
+11,EI Macrophages
+12,proNeu2
+13,cDC2
+14,Kupffer Cells
+15,T cell contaminated
+16,Rest Granulocytes
+17,proNeu1
+18,GMP
+19,migcDC
+20,B cell contaminated
+21,pDC
+22,Neutrophils

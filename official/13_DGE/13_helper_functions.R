@@ -75,16 +75,22 @@ run_pseudobulk_dge <- function(input.s.obj, sample1, sample2){
     mutate(sig = ifelse(padj <= padj_cutoff & abslog2FoldChange >= logFC_cutoff, "sig.diff", "nonsig.diff")) 
   
   resdf.sigOnly <- subset(resdf, resdf$padj <= padj_cutoff & resdf$abslog2FoldChange >= logFC_cutoff) %>% arrange(desc(log2FoldChange))
-  heatmap.input <- rbind(head(resdf.sigOnly, 10), tail(resdf.sigOnly, 10))[, c("Gene", pseudo_metadata$sample.id)]
-  
-  heatmap.top50.input <- rbind(head(resdf.sigOnly, 50), tail(resdf.sigOnly, 50))[, c("Gene", pseudo_metadata$sample.id)]
-  
-  heatmap.full.input <-resdf.sigOnly[, c("Gene", pseudo_metadata$sample.id)] %>% column_to_rownames("Gene")
-  heatmap.full.input.scaled <- (heatmap.full.input - rowSums(heatmap.full.input))/rowSds(as.matrix(heatmap.full.input)) 
-  
-  heatmap.full.input.scaled <- heatmap.full.input.scaled %>% rownames_to_column("Gene") 
-  heatmap.full.input.scaled <- merge(heatmap.full.input.scaled, subset(resdf.sigOnly, select = c(Gene, padj, log2FoldChange, abslog2FoldChange)),
-                                     by.x = "Gene", by.y = "Gene") %>% arrange(desc(log2FoldChange))
+  if (nrow(resdf.sigOnly) == 0){
+    heatmap.full.input.scaled <- data.frame()
+    heatmap.top50.input <- data.frame()
+  } else {
+    heatmap.input <- rbind(head(resdf.sigOnly, 10), tail(resdf.sigOnly, 10))[, c("Gene", pseudo_metadata$sample.id)]
+    
+    heatmap.top50.input <- rbind(head(resdf.sigOnly, 50), tail(resdf.sigOnly, 50))[, c("Gene", pseudo_metadata$sample.id)]
+    
+    heatmap.full.input <-resdf.sigOnly[, c("Gene", pseudo_metadata$sample.id)] %>% column_to_rownames("Gene")
+    heatmap.full.input.scaled <- (heatmap.full.input - rowSums(heatmap.full.input))/rowSds(as.matrix(heatmap.full.input)) 
+    
+    heatmap.full.input.scaled <- heatmap.full.input.scaled %>% rownames_to_column("Gene") 
+    heatmap.full.input.scaled <- merge(heatmap.full.input.scaled, subset(resdf.sigOnly, select = c(Gene, padj, log2FoldChange, abslog2FoldChange)),
+                                       by.x = "Gene", by.y = "Gene") %>% arrange(desc(log2FoldChange))
+    
+  }
   output <- list(
     dds = dds,
     resdf = resdf,
