@@ -1,32 +1,34 @@
 ---
-title: "DEA between d4_LPS vs d4_SPF, sub-cluster `r params$sub.cluster.id`"
+title: "Differential gene expression analysis"
 author:
   - "trnguyen@ukaachen.de"
 date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
-    number_sections: true
+    keep_md: no
     df_print: paged
     toc: true
     toc_float:
       toc_collapsed: false
     toc_depth: 3
+    number_sections: true
     theme: lumen
 params:
-  outdir: NA
-  PROJECT: NA
-  s.obj.name: NA
-  sub.cluster.id: NA
+  sample1: NA
+  sample2: NA
+  path.to.s.obj: NA
+  path.to.save.output: NA
 ---
-  
+
+
 ```{css zoom-lib-src, echo = FALSE}
 script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 ```
 
 ```{js zoom-jquery, echo = FALSE}
-$(document).ready(function() {
-  $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
-  // onClick function for all plots (img's)
+ $(document).ready(function() {
+    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+    // onClick function for all plots (img's)
     $('img:not(.zoomImg)').click(function() {
       $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
       $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
@@ -42,57 +44,89 @@ $(document).ready(function() {
     div.datatables { height: auto !important;}
 </style>
 
+
+# Differential gene expression for each cluster of cells
+
+- **positive** `logFC` indicates that the gene is highly expressed in the sample 2, `r params$sample2`.
+
+- **negative** `logFC` indicates that the gene is highly expressed in the sample 1, `r params$sample1`.
+
+
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 #####----------------------------------------------------------------------#####
 #
 # trnguyen@ukaachen.de
 #
 #####----------------------------------------------------------------------#####
-scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
-source(file.path(scrna_pipeline_src, "import_libraries.R"))
-source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-#####----------------------------------------------------------------------#####
-# CONFIGURATIONS 
-#####----------------------------------------------------------------------#####
-analysis.round <- "1st"
-
-chosen.seed <- 42
-num.dim.integration <- 25 
-num.PCA <- 25
-num.dim.cluster <- 25
-num.PC.used.in.Clustering <- 25
-
-sample1 <- "d4_LPS"
-sample2 <- "d4_SPF"
+##### clean up #####
+# gc()
+# rm(list = ls())
+if ("org.Mm.eg.db" %in% installed.packages() == FALSE){
+  BiocManager::install("org.Mm.eg.db", update = FALSE)
+}
 
 if ("heatmaply" %in% installed.packages() == FALSE){
   install.packages("heatmaply")
 }
-path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/processes_src"
 
-# outdir <- "/home/hieunguyen/CRC1382/outdir"
-# PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
-# sub.cluster.id <- "Myeloid_Basophils"
-# sub.cluster.id <- "T_cells"
-# sub.cluster.id <- "B_cells"
-# s.obj.name <- "all_sobj.integrated.rds"
+library(org.Mm.eg.db)
+# devtools::install_github("YuLab-SMU/yulab.utils", upgrade = "never")
 
-outdir <- params$outdir
-PROJECT <- params$PROJECT
-sub.cluster.id <- params$sub.cluster.id
-s.obj.name <- params$s.obj.name
+#####----------------------------------------------------------------------#####
+##### UPGRADE THE CLUSTERPROFILER PACKAGES
+if (packageVersion("clusterProfiler") != "4.13.3"){
+  remove.packages("DOSE")
+  remove.packages("GOSemSim")
+  remove.packages("yulab.utils")
+  remove.packages("clusterProfiler")
+  remotes::install_github("GuangchuangYu/GOSemSim", upgrade = "never")
+  remotes::install_github("GuangchuangYu/clusterProfiler", upgrade = "never")
+}
+#####----------------------------------------------------------------------#####
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
+source(file.path(scrna_pipeline_src, "import_libraries.R"))
+source(file.path(scrna_pipeline_src, "helper_functions.R"))
+# 
+# sample1 <- params$sample1
+# sample2 <- params$sample2
+# path.to.s.obj <- params$path.to.s.obj
+# path.to.save.output <- params$path.to.save.output
 
-path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+sample1 <- "d4_LPS"
+sample2 <- "d4_SPF"
+path.to.s.obj <- "/home/hieunguyen/CRC1382/outdir/EStange_20240411_SeuratV4_reduced_RNAcontam_0/data_analysis/08_output/Myeloid_Basophils/Myeloid_Basophils.remove_contam_T_B_cells.rds"
+path.to.save.output <- "/home/hieunguyen/CRC1382/outdir/EStange_20240411_SeuratV4_reduced_RNAcontam_0/data_analysis/05_output"
 
-path.to.01.output <- file.path(path.to.main.output, "01_output")
-path.to.02.output <- file.path(path.to.main.output, "02_output")
-path.to.03.output <- file.path(path.to.main.output, "03_output")
-path.to.04.output <- file.path(path.to.main.output, "04_output")
-path.to.05.output <- file.path(path.to.main.output, "05_output", sub.cluster.id)
-dir.create(path.to.05.output, showWarnings = FALSE, recursive = TRUE)
-s.obj <- readRDS(file.path(path.to.04.output, s.obj.name, "preprocessed_subcluster_obj", sprintf("preprocessed_subclusters_%s.rds", sub.cluster.id)))
+dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
+
+library(clusterProfiler)
+if (packageVersion("org.Mm.eg.db") != "3.19.1"){
+  install.packages("https://bioconductor.org/packages/release/bioc/src/contrib/AnnotationDbi_1.66.0.tar.gz", 
+                   type = "source", repos = NULL)
+  install.packages("https://bioconductor.org/packages/release/data/annotation/src/contrib/org.Mm.eg.db_3.19.1.tar.gz", 
+                   type = "source", repos = NULL)
+  install.packages("https://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_3.4.4.tar.gz", type = "source", repos= NULL)
+}
+library(org.Mm.eg.db)
 ```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+print(sprintf("Path to the input Seurat object: %s", path.to.s.obj))
+print(sprintf("Sample 1: %s", sample1))
+print(sprintf("Sample 2: %s", sample2))
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
+s.obj <- readRDS(path.to.s.obj)
+s.obj.original <- s.obj
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
+all.genes.in.Mm.db <- AnnotationDbi::keys(org.Mm.eg.db, keytype = "SYMBOL")
+```
+
+**In this analysis, we conduct the Differential gene expression analysis between sample** `r params$sample1` vs. `r params$sample2`  **in the dataset ** `r basename(params$path.to.s.obj)`**. We also removed TCR genes.**
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 TR_genes_patterns <- c("Trav", "Traj", "Trac", "Trbv", "Trbd", "Trbj", "Trbc",
@@ -114,153 +148,9 @@ genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 s.obj <- subset(s.obj, name %in% c(sample1, sample2))
-```
-
-# Ambient RNA contamination on UMAP 
-
-## All samples, integrated
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-FeaturePlot(object = s.obj, features = "AmbientRNA", label = TRUE, label.size = 8, reduction = "INTE_UMAP")
-```
-
-## Each sample, integrated UMAP {.tabset}
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-for (sample.id in unique(s.obj$name)){
-  cat(sprintf("### Sample %s \n", sample.id))
-  p <- FeaturePlot(object = subset(s.obj, name == sample.id), features = "AmbientRNA", label = TRUE, label.size = 8, reduction = "INTE_UMAP")
-  print(p)
-  cat("\n \n")
-}
-```
-
-## Each sample, Violin plot ambient RNA contamination level in each cluster {.tabset}
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-for (sample.id in unique(s.obj$name)){
-  cat(sprintf("### Sample %s \n", sample.id))
-  p <- VlnPlot(object = subset(s.obj, name == sample.id), features = "AmbientRNA")
-  print(p)
-  cat("\n \n")
-}
-```
-
-## UMAP: highlight cells (red) that have >= 50% ambient RNA contamination
-```{r echo=FALSE, fig.height=10, fig.width=14, message=FALSE, warning=FALSE, results='asis'}
-high.ambientRNA.cells <- subset(s.obj@meta.data, s.obj@meta.data$AmbientRNA >= 0.5) %>% row.names()
-
-meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
-  rowwise() %>%
-  mutate(high.ambientRNA = ifelse(barcode %in% high.ambientRNA.cells, "yes", "no")) %>%
-  column_to_rownames("barcode")
-meta.data <- meta.data[row.names(s.obj@meta.data), ]
-s.obj <- AddMetaData(object = s.obj, metadata = meta.data$high.ambientRNA, col.name = "high.ambientRNA")
-```
-
-
-```{r echo=FALSE, fig.height=10, fig.width=14, message=FALSE, warning=FALSE, results='asis'}
-DimPlot(object = s.obj, reduction = "INTE_UMAP", cells.highlight = high.ambientRNA.cells,
-        cols.highlight = "red", split.by = "name")
-```
-
-# Differential gene expression analysis: high ambient RNA contaminated cells vs others
-
-- positive logFC indicates that the gene is higher in the "ambient RNA contaminated cells >= 50%" cells. 
-
-- negative logFC indicates that the gene is lower in the "ambient RNA contaminated cells >= 50%" cells.
-
-```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
-if (file.exists(file.path(path.to.05.output, "high.ambientRNA.markers.rds")) == FALSE){
-  high.ambientRNA.markers <- FindMarkers(object = s.obj, ident.1 = "yes", ident.2 = "no", group.by = "high.ambientRNA", assay = "RNA", test.use = "wilcox")
-  high.ambientRNA.markers.raw <- high.ambientRNA.markers
-  high.ambientRNA.markers <- subset(high.ambientRNA.markers, high.ambientRNA.markers$p_val_adj <= 0.05)
-  saveRDS(high.ambientRNA.markers.raw, file.path(path.to.05.output, "high.ambientRNA.markers.raw.rds"))
-  saveRDS(high.ambientRNA.markers, file.path(path.to.05.output, "high.ambientRNA.markers.rds"))
-} else {
-  high.ambientRNA.markers <- readRDS(file.path(path.to.05.output, "high.ambientRNA.markers.rds"))
-  high.ambientRNA.markers.raw <- readRDS(file.path(path.to.05.output, "high.ambientRNA.markers.raw.rds"))
-}
-
-high.ambientRNA.markers <- high.ambientRNA.markers %>% rownames_to_column("Gene") %>% rowwise() %>%
-  mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
-```
-
-## Full table: All differentially expressed genes
-```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
-high.ambientRNA.markers %>% create_dt()
-```
-
-## Volcano plot
-```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
-input.df <- high.ambientRNA.markers.raw %>% rownames_to_column("Gene")
-all.pvals <- unique(input.df$p_val_adj)
-all.pvals <- all.pvals[all.pvals != 0]
-min.pval.adj <- min(all.pvals)
-input.df <- input.df %>% rowwise() %>%
-  mutate(p_val_adj = ifelse(p_val_adj == 0, min.pval.adj, p_val_adj))
-
-top10up.genes <- input.df %>% subset(p_val_adj <= 0.05 & avg_log2FC > 0) %>% arrange(desc(avg_log2FC)) %>% head(10)
-top10down.genes <- input.df %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(10)
-input.df <- input.df %>%
-rowwise() %>%
-mutate(sig = ifelse(p_val_adj <= 0.05, "Sig.", "not Sig.")) %>%
-  mutate(show.gene.name = ifelse(Gene %in% c(top10up.genes$Gene, top10down.genes$Gene), Gene, NA))
-  
-cutoff.adjp <- 0.05
-volcano.plot <- ggplot(data=input.df, aes(x=avg_log2FC, y=-log10(p_val_adj ), col = sig, label=Gene)) +
-  geom_point() +
-  geom_label_repel(label = input.df$show.gene.name, size = 8, max.overlaps = 100) +
-  scale_color_manual(values=c("#c0d2f0", "#f28095")) +
-  theme_minimal() +
-  geom_vline(xintercept=c(-1, 1), col="#9a9fa6", linetype='dotted') +
-  geom_hline(yintercept=-log10(cutoff.adjp), col="#9a9fa6", linetype='dotted') +
-  theme_bw() +
-  theme(plot.title = element_text(hjust=0.5, face="bold", size = 12), axis.text=element_text(size=12))
-volcano.plot
-```
-
-# Differential gene expression test
-
-- **positive** `logFC` indicates that the gene is highly expressed in the first sample, `r params$sample1`.
-
-- **negative** `logFC` indicates that the gene is highly expressed in the second sample, `r params$sample2`.
-
-## Number of cells in each cluter, each sample
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-count.cluster.sample <- table(s.obj@meta.data %>% 
-        subset(select = c(seurat_clusters, name))) %>% 
-  as.data.frame()  %>%
-  pivot_wider(names_from = "name", values_from = "Freq")
-count.cluster.sample[[sprintf("pct_%s", sample1)]] <- count.cluster.sample[[sample1]]/sum(count.cluster.sample[[sample1]])
-count.cluster.sample[[sprintf("pct_%s", sample2)]] <- count.cluster.sample[[sample2]]/sum(count.cluster.sample[[sample2]])
-
-sum.count.clusters <- count.cluster.sample[[sample1]] + count.cluster.sample[[sample2]]
-
-count.cluster.sample[[sprintf("pct_in_cluster_%s", sample1)]] <- count.cluster.sample[[sample1]]/sum.count.clusters
-count.cluster.sample[[sprintf("pct_in_cluster_%s", sample2)]] <- count.cluster.sample[[sample2]]/sum.count.clusters
-
-count.cluster.sample %>%  mutate_if(is.numeric, round, 6) %>% create_dt()
-```
-
-### Stacked bar plot: percentage of cells coming from each sample in each cluster
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-plotdf <- count.cluster.sample[, c("seurat_clusters", sprintf("pct_in_cluster_%s", sample1), sprintf("pct_in_cluster_%s", sample2))] %>%
-  pivot_longer(!seurat_clusters, names_to = "Sample", values_to = "pct")
-
-plotdf %>% ggplot(aes(x = seurat_clusters, y = pct, fill = Sample)) + geom_bar(stat = "identity")
-```
-
-## Number of cells in each sample (= number of cells in each pseudobulk sample)
-
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-table(s.obj@meta.data %>% 
-        subset(select = c(name))) %>% 
-  as.data.frame() %>% create_dt()
-```
-
-
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-savename <- sprintf("sample_%s_vs_%s.rds", sample1, sample2)
-savename.raw <- sprintf("sample_%s_vs_%s.raw.rds", sample1, sample2)
-if (file.exists(file.path(path.to.05.output, savename)) == FALSE){
+savename <- sprintf("sample_%s_vs_%s.single_cell.rds", sample1, sample2)
+savename.raw <- sprintf("sample_%s_vs_%s.raw.single_cell.rds", sample1, sample2)
+if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
   de.markers <- hash()
   de.markers.raw <- hash()
   num.clusters <- length(unique(s.obj$seurat_clusters))
@@ -284,9 +174,9 @@ if (file.exists(file.path(path.to.05.output, savename)) == FALSE){
     }
     
     if (count.sample1 >= 10 & count.sample2 >= 10){
-      tmp.de.markers <- FindMarkers(object = tmp.s.obj, ident.1 = sample1, ident.2 = sample2, 
+      tmp.de.markers <- FindMarkers(object = tmp.s.obj, ident.1 = sample2, ident.2 = sample1, 
                                   group.by = "name", test.use = "wilcox", assay = "RNA",
-                                  features = intersect(row.names(s.obj), genes.to.keep))
+                                  features = intersect(row.names(s.obj), genes.to.keep), recorrect_umi = FALSE)
       
       tmp.de.markers.raw <-  tmp.de.markers %>% 
           rownames_to_column("Gene") %>%
@@ -306,25 +196,28 @@ if (file.exists(file.path(path.to.05.output, savename)) == FALSE){
     de.markers[[sprintf("cluster_%s", cluster.id)]] <- tmp.de.markers
     de.markers.raw[[sprintf("cluster_%s", cluster.id)]] <- tmp.de.markers.raw
   }
-  saveRDS(object = de.markers, file.path(path.to.05.output, savename))
-  saveRDS(object = de.markers.raw, file.path(path.to.05.output, savename.raw))
+  saveRDS(object = de.markers, file.path(path.to.save.output, savename))
+  saveRDS(object = de.markers.raw, file.path(path.to.save.output, savename.raw))
 } else {
-  de.markers <- readRDS(file.path(path.to.05.output, savename))
-  de.markers.raw <- readRDS(file.path(path.to.05.output, savename.raw))
+  de.markers <- readRDS(file.path(path.to.save.output, savename))
+  de.markers.raw <- readRDS(file.path(path.to.save.output, savename.raw))
 }
+
+
 
 ```
 
-## Full tables of all D.E genes {.tabset}
+## Full tables of all D.E genes between sample `r params$sample1` vs `r params$sample2`` {.tabset}
 ```{r echo=FALSE, include=FALSE}
 de.markers[[sprintf("cluster_%s", 0)]] %>% create_dt()
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
 all.clusters.in.de.markers <- sort(to_vec( for (item in names(de.markers)) as.numeric(str_split(item, "_")[[1]][[2]]) ))
+all.clusters.in.de.markers <- to_vec( for(item in all.clusters.in.de.markers) sprintf("cluster_%s", item))
 for (cluster.id in all.clusters.in.de.markers){
-  tmp <- de.markers[[sprintf("cluster_%s", cluster.id)]] %>% mutate_if(is.numeric, round, 5) 
-  cat(paste("\n\n### Cluster: ", cluster.id, "##\n"))
+  tmp <- de.markers[[cluster.id]] %>% mutate_if(is.numeric, round, 5) 
+  cat(paste("\n\n###", cluster.id, "##\n"))
   print( htmltools::tagList(datatable(tmp, extensions = 'Buttons',
                 filter = "top",
                 options = list(dom = 'Blfrtip',
@@ -349,10 +242,10 @@ for (cluster.id in all.clusters.in.de.markers){
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 for (cluster.id in all.clusters.in.de.markers){
   cat(sprintf("### Cluster %s \n", cluster.id))
-  input.df <- de.markers.raw[[sprintf("cluster_%s", cluster.id)]] 
+  input.df <- de.markers.raw[[cluster.id]] 
   if ("data" %in% colnames(input.df) == FALSE & nrow(input.df) != 0){
-    top10up.genes <- input.df %>% subset(p_val_adj <= 0.05 & avg_log2FC > 0) %>% arrange(desc(avg_log2FC)) %>% head(10)
-    top10down.genes <- input.df %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(10)
+    top10up.genes <- input.df %>% subset(p_val_adj <= 0.05) %>% arrange(desc(avg_log2FC)) %>% head(10)
+    top10down.genes <- input.df %>% subset(p_val_adj <= 0.05) %>% arrange(desc(avg_log2FC)) %>% tail(10)
     input.df <- input.df %>%
     rowwise() %>%
     mutate(sig = ifelse(p_val_adj <= 0.05, "Sig.", "not Sig.")) %>%
@@ -361,15 +254,13 @@ for (cluster.id in all.clusters.in.de.markers){
     
     cutoff.adjp <- 0.05
     volcano.plot <- ggplot(data=input.df, 
-                            aes(x=avg_log2FC, y=-log10(p_val_adj), col = sig, label=Gene)) + 
-                            geom_point() + geom_label_repel(label = input.df$show.gene.name, size = 8) + 
-                            scale_color_manual(values=c("#c0d2f0", "#f28095")) +
-                            theme_minimal() +
-                            geom_vline(xintercept=c(-1, 1), col="#9a9fa6", linetype='dotted') +
-                            geom_hline(yintercept=-log10(cutoff.adjp), col="#9a9fa6", linetype='dotted') +
-                            #geom_text() +
-                          theme_bw() + 
-                          theme(plot.title = element_text(hjust=0.5, face="bold", size = 12), axis.text=element_text(size=12))
+                           aes(x=avg_log2FC, y=-log10(p_val_adj), col = sig, label=Gene)) + 
+      geom_point(size = 3) + geom_label_repel(label = input.df$show.gene.name, size = 8) + 
+      scale_color_manual(values=c("#c0d2f0", "#f28095")) +
+      geom_vline(xintercept=c(-1, 1), col="#9a9fa6") +
+      geom_hline(yintercept=-log10(cutoff.adjp), col="#9a9fa6") +
+      theme(plot.title = element_text(hjust=0.5, face="bold", size = 12), axis.text=element_text(size=12)) + 
+      theme_bw()
     
   } else {
     volcano.plot <- ggplot() + ggtitle("Not enough cells to conduct DE test")
@@ -377,51 +268,59 @@ for (cluster.id in all.clusters.in.de.markers){
   print(volcano.plot)
   cat("\n \n")
 }
-```
 
-## Heatmap {.tabset}
-```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-mapal <- colorRampPalette(RColorBrewer::brewer.pal(11,"RdBu"))(256)
-for (input.cluster in names(de.markers)){
-  tmp.de.markers <- de.markers[[input.cluster]]
-  cat(sprintf("### %s \n", input.cluster))
-  if (nrow(tmp.de.markers) > 1) {
-    top10up.genes <- tmp.de.markers %>% subset(p_val_adj <= 0.05 & avg_log2FC > 0) %>% arrange(desc(avg_log2FC)) %>% head(20)
-    top10down.genes <- tmp.de.markers %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(20)
-    p <- DoHeatmap(object = subset(s.obj, seurat_clusters == str_replace(input.cluster, "cluster_", "")), 
-                   features = c(top10up.genes$Gene, top10down.genes$Gene), 
-                   group.by = "name", raster = TRUE) + scale_fill_gradientn(colours = rev(mapal))
-  } else{
-    p <- ggplot() + ggtitle("No DE gene to show on heatmap")  
-  } 
-  print(p)
-  cat("\n \n")    
-}
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-# if ("clusterProfiler" %in% installed.packages() == TRUE){
-#   remove.packages("clusterProfiler")
-# }
-if (packageVersion("clusterProfiler") != "4.10.1"){
-# if ("clusterProfiler" %in% installed.packages() == FALSE){
-  remove.packages("clusterProfiler")
-  remove.packages("DOSE")
-  remove.packages("GOSemSim")
-  path.to.install.dir <- "/media/hieunguyen/HD01/storage/offline_pkgs/clusterProfiler"
-  install.packages(file.path(path.to.install.dir, "HDO.db_0.99.1.tar.gz"), type = "source", repos = NULL)
-  install.packages(file.path(path.to.install.dir, "yulab.utils_0.1.4.tar.gz"), type = "source", repos = NULL)
-  install.packages(file.path(path.to.install.dir, "GOSemSim_2.28.1.tar.gz"), type = "source", repos = NULL)
-  install.packages(file.path(path.to.install.dir, "DOSE_3.28.2.tar.gz"), type = "source", repos = NULL) 
-  install.packages(file.path(path.to.install.dir, "gson_0.1.0.tar.gz"), type = "source", repos = NULL)
-  install.packages(file.path(path.to.install.dir, "clusterProfiler_4.10.1.tar.gz"), type = "source", repos = NULL) 
-}
-
 library("clusterProfiler")
+```
 
-if ("heatmaply" %in% installed.packages() == FALSE){
-  install.packages("heatmaply")
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
+diff.markers.df <- data.frame()
+for (cluster.id in names(de.markers.raw)){
+  tmp <- de.markers.raw[[cluster.id]] %>% mutate(cluster = cluster.id)
+  if ("data" %in% colnames(tmp) == FALSE){
+    diff.markers.df <- rbind(diff.markers.df, tmp)    
+  }
 }
+if ("org.Mm.eg.db" %in% installed.packages() == FALSE){
+  BiocManager::install("org.Mm.eg.db")
+}
+library("org.Mm.eg.db")
+```
+
+## Heatmaps {.tabset}
+
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=15}
+for (cluster.id in all.clusters.in.de.markers){
+  cat(sprintf("### Cluster %s \n", cluster.id))
+  inputdf <- de.markers[[cluster.id]] 
+  if ("data" %in% colnames(inputdf) | nrow(inputdf) == 0){
+    p <- ggplot() + ggtitle("No significantly DE genes found or not enough cells to conduct DE test!")
+  } else {
+    inputdf <- inputdf %>% subset(p_val_adj <= 0.05) %>% arrange(desc(avg_log2FC))
+    top10up.genes <- inputdf %>% head(10)
+    top10down.genes <- inputdf %>% tail(10)
+    tryCatch(
+        {
+          p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
+                         features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "RNA")
+          return(p)
+        },
+        error=function(e) {
+            p <- ggplot() + ggtitle("No data to generate heatmap for this cluster")
+            return(p)
+        }
+    )
+    
+      
+  }
+  print(p)
+  cat("\n \n")
+}
+
 ```
 
 # Pathway analysis for the cluster specific DE test (single cell data)
@@ -507,11 +406,7 @@ for(cluster.id in all.cluster.ids){
 
 ### GO-ORA {.tabset}
 ```{r echo=FALSE, warning=FALSE, results='asis'}
-if ("org.Mm.eg.db" %in% installed.packages() == FALSE){
-  BiocManager::install("org.Mm.eg.db")  
-}
-library(org.Mm.eg.db)
-if (file.exists(file.path(path.to.05.output, "all_ORA_GO_objects.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds")) == FALSE){
   go.ora <- hash()
   all.ORA.GO.objects <- hash()
   for (cluster.id in all.cluster.ids){
@@ -538,19 +433,17 @@ if (file.exists(file.path(path.to.05.output, "all_ORA_GO_objects.single_cell.rds
       go.ora[[cluster.id]] <- data.frame(data = c("No DE genes to conduct ORA"))
     }
   }
-  saveRDS(all.ORA.GO.objects, file.path(path.to.05.output, "all_ORA_GO_objects.single_cell.rds"))
-  saveRDS(go.ora, file.path(path.to.05.output, "all_ORA_GO_tables.single_cell.rds"))
+  saveRDS(all.ORA.GO.objects, file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds"))
+  saveRDS(go.ora, file.path(path.to.save.output, "all_ORA_GO_tables.single_cell.rds"))
 } else {
-  all.ORA.GO.objects <- readRDS(file.path(path.to.05.output, "all_ORA_GO_objects.single_cell.rds"))
-  go.ora <- readRDS(file.path(path.to.05.output, "all_ORA_GO_tables.single_cell.rds"))
+  all.ORA.GO.objects <- readRDS(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds"))
+  go.ora <- readRDS(file.path(path.to.save.output, "all_ORA_GO_tables.single_cell.rds"))
 }
 ```
-
 
 ```{r echo=FALSE, warning=FALSE, results='asis', include=FALSE}
 go.ora[["cluster_0"]] %>% create_dt()
 ```
-
 
 ```{r echo=FALSE, warning=FALSE, results='asis'}
 for (cluster.id in names(go.ora)){
@@ -577,9 +470,7 @@ for (cluster.id in names(go.ora)){
 
 ### KEGG-ORA {.tabset}
 ```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE}
-all.genes.in.Mm.db <- keys(org.Mm.eg.db, keytype = "SYMBOL")
-
-if (file.exists(file.path(path.to.05.output, "all_ORA_KEGG_objects.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds")) == FALSE){
   kegg.ora <- hash()
   all.ORA.KEGG.objects <- hash()
   for (cluster.id in all.cluster.ids){
@@ -607,11 +498,11 @@ if (file.exists(file.path(path.to.05.output, "all_ORA_KEGG_objects.single_cell.r
     }
 
   }
-  saveRDS(all.ORA.KEGG.objects, file.path(path.to.05.output, "all_ORA_KEGG_objects.single_cell.rds"))
-  saveRDS(kegg.ora, file.path(path.to.05.output, "all_ORA_KEGG_tables.single_cell.rds"))
+  saveRDS(all.ORA.KEGG.objects, file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds"))
+  saveRDS(kegg.ora, file.path(path.to.save.output, "all_ORA_KEGG_tables.single_cell.rds"))
 }else {
-  all.ORA.KEGG.objects <- readRDS(file.path(path.to.05.output, "all_ORA_KEGG_objects.single_cell.rds"))
-  kegg.ora <- readRDS(file.path(path.to.05.output, "all_ORA_KEGG_tables.single_cell.rds"))
+  all.ORA.KEGG.objects <- readRDS(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds"))
+  kegg.ora <- readRDS(file.path(path.to.save.output, "all_ORA_KEGG_tables.single_cell.rds"))
 }
 
 ```
@@ -652,7 +543,7 @@ for (cluster.id in names(kegg.ora)){
 go.gsea <- hash()
 all.GSEA.GO.objects <- hash()
 
-if (file.exists(file.path(path.to.05.output, "GO_GSEA_all_GO_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.05.output, "GO_GSEA_pathways_tables.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds")) == FALSE){
   for(cluster.id in all.cluster.ids){
   tmp.full.list <- de.markers.raw[[cluster.id]] %>% arrange(desc(avg_log2FC))
   input.gene.list <- tmp.full.list$avg_log2FC
@@ -676,11 +567,11 @@ if (file.exists(file.path(path.to.05.output, "GO_GSEA_all_GO_objects.single_cell
   GSEA.GO.sum.res <- GSEA.GO.sum.res %>% mutate_if(is.numeric, round, 6)
   go.gsea[[cluster.id]] <- GSEA.GO.sum.res  
 }
-  saveRDS(object = go.gsea, file = file.path(path.to.05.output, "GO_GSEA_pathways_tables.single_cell.rds"))
-  saveRDS(object = all.GSEA.GO.objects, file = file.path(path.to.05.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
+  saveRDS(object = go.gsea, file = file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds"))
+  saveRDS(object = all.GSEA.GO.objects, file = file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
 } else {
-  go.gsea <- readRDS(file.path(path.to.05.output, "GO_GSEA_pathways_tables.single_cell.rds"))
-  all.GSEA.GO.objects <- readRDS(file.path(path.to.05.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
+  go.gsea <- readRDS(file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds"))
+  all.GSEA.GO.objects <- readRDS(file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
 }
 ```
 
@@ -723,7 +614,7 @@ kegg.gsea <- hash()
 all.GSEA.KEGG.objects <- hash()
 
 
-if (file.exists(file.path(path.to.05.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.05.output, "KEGG_GSEA_pathways_tables.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds")) == FALSE){
   for(cluster.id in all.cluster.ids){
     tmp.full.list <- de.markers.raw[[cluster.id]] %>% arrange(desc(avg_log2FC))
     convertdf <- bitr(tmp.full.list$Gene, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
@@ -753,11 +644,11 @@ if (file.exists(file.path(path.to.05.output, "KEGG_GSEA_all_KEGG_objects.single_
     GSEA.KEGG.sum.res <- GSEA.KEGG.sum.res %>% mutate_if(is.numeric, round, 6) 
     kegg.gsea[[cluster.id]] <- GSEA.KEGG.sum.res
   }
-  saveRDS(object = kegg.gsea, file = file.path(path.to.05.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
-  saveRDS(object = all.GSEA.KEGG.objects, file = file.path(path.to.05.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
+  saveRDS(object = kegg.gsea, file = file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
+  saveRDS(object = all.GSEA.KEGG.objects, file = file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
 } else {
-  kegg.gsea <- readRDS(file.path(path.to.05.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
-  all.GSEA.KEGG.objects <- readRDS(file.path(path.to.05.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
+  kegg.gsea <- readRDS(file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
+  all.GSEA.KEGG.objects <- readRDS(file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
 }
 
 ```
@@ -900,17 +791,7 @@ for(cluster.id in all.cluster.ids){
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 library(DESeq2)
-s.obj.full <- s.obj
-
-# count.mtx.foxp3 <- GetAssayData(s.obj.full, slot = "counts", assay = "RNA")["Foxp3", ]
-# 
-# if (foxp3 == "positive"){
-#   foxp3.cells <- names(count.mtx.foxp3[count.mtx.foxp3 > 0])
-#   s.obj.full <- subset(s.obj.full, cells = foxp3.cells)
-# } else if (foxp3 == "zero") {
-#   foxp3.cells <- names(count.mtx.foxp3[count.mtx.foxp3 == 0])
-#   s.obj.full <- subset(s.obj.full, cells = foxp3.cells)
-# }
+s.obj.full <- s.obj.original
 
 s.obj <- hash()
 s.obj[[sample1]] <- subset(s.obj.full, name == sample1)
@@ -1025,7 +906,7 @@ resdf.sigOnly %>% mutate_if(is.numeric, round, 8) %>% create_dt()
 
 ## Scaled z-score pseudobulk gene expression, all DE genes
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-# writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.05.output, sprintf("heatmap_input_%s_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2, foxp3)))
+writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2)))
 ```
 
 
@@ -1124,7 +1005,7 @@ For all significant pathways, we generate a bar-plot showing all Normalized Enri
 `set.seed(42)` and set `seed = TRUE` in the functions of `clusterProfiler` to ensure reproducibility.
 
 
-# Pathway analysis results for the pseudobulk RNA DE test
+# Pathway analysis results for the pseudobulk SCT DE test
 
 ```{r, echo=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 diff.markers.df <- resdf
@@ -1147,11 +1028,7 @@ sig.diff.markers.df %>% mutate_if(is.numeric, round, 6) %>% arrange(desc(log2Fol
 ```
 
 ## Over-representation analysis (ORA)
-```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE, include=FALSE}
-library(clusterProfiler)
-library(org.Mm.eg.db)
 
-```
 
 ### GO-ORA
 ```{r echo=FALSE, warning=FALSE, results='asis'}
@@ -1392,7 +1269,9 @@ for (i in top10_down_nes_idx.KEGG){
   print(p)
   cat("\n \n")
 }
+
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}
 ```
+

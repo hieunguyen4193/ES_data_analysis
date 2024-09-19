@@ -152,10 +152,10 @@ savename.raw <- sprintf("sample_%s_vs_%s.raw.single_cell.rds", sample1, sample2)
 if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
   de.markers <- hash()
   de.markers.raw <- hash()
-  num.clusters <- length(unique(s.obj$seurat_clusters))
+  num.clusters <- length(unique(s.obj$cca.cluster.0.5))
   
-  for (cluster.id in unique(s.obj$seurat_clusters)){
-    tmp.s.obj <- subset(s.obj, seurat_clusters == cluster.id)
+  for (cluster.id in unique(s.obj$cca.cluster.0.5)){
+    tmp.s.obj <- subset(s.obj, cca.cluster.0.5 == cluster.id)
     
     count.cells <- tmp.s.obj@meta.data %>% subset(select = c(name)) %>% table %>% data.frame()
     if (sample1 %in% count.cells$name == FALSE | sample2 %in% count.cells$name == FALSE){
@@ -305,7 +305,7 @@ for (cluster.id in all.clusters.in.de.markers){
     top10down.genes <- inputdf %>% tail(10)
     tryCatch(
         {
-          p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
+          p <- DoHeatmap(object = subset(s.obj, cca.cluster.0.5 == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
                          features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "SCT")
           return(p)
         },

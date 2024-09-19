@@ -88,8 +88,9 @@ path.to.01.output <- file.path(path.to.main.output, "01_output")
 path.to.02.output <- file.path(path.to.main.output, "02_output")
 path.to.03.output <- file.path(path.to.main.output, "03_output")
 path.to.08.output <- file.path(path.to.main.output, "08_output", sub.cluster.id)
-
-s.obj <- readRDS(file.path(path.to.08.output, sprintf("%s.remove_contam_T_B_cells.rds", sub.cluster.id)))
+path.to.09.output <- file.path(path.to.main.output, "09_output", sub.cluster.id)
+dir.create(path.to.09.output, showWarnings = FALSE, recursive = TRUE)
+s.obj <- readRDS(file.path(path.to.08.output, sprintf("%s.remove_contam_T_B_cells.ambientRNAonly.rds", sub.cluster.id)))
 ```
 
 ## UMAP after removing T/B contaminated cells
@@ -146,12 +147,12 @@ DimPlot(object = s.obj, reduction = "INTE_UMAP", cells.highlight = ambientRNA.ce
 
 # Cluster marker genes
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=25, fig.height=12}
-if (file.exists(file.path(path.to.08.output, sprintf("cluster_markers_subclusters_%s.rds", sub.cluster.id))) == FALSE){
+if (file.exists(file.path(path.to.09.output, sprintf("cluster_markers_subclusters_%s.rds", sub.cluster.id))) == FALSE){
   cluster.markers <- FindAllMarkers(object = s.obj, test.use = "wilcox", assay = "RNA")
   cluster.markers <- subset(cluster.markers, cluster.markers$p_val_adj <= 0.05 & cluster.markers$avg_log2FC > 0)
-  saveRDS(cluster.markers, file.path(path.to.08.output, sprintf("cluster_markers_subclusters_%s.rds", sub.cluster.id)))
+  saveRDS(cluster.markers, file.path(path.to.09.output, sprintf("cluster_markers_subclusters_%s.rds", sub.cluster.id)))
 } else {
-  cluster.markers <- readRDS(file.path(path.to.08.output, sprintf("cluster_markers_subclusters_%s.rds", sub.cluster.id)))
+  cluster.markers <- readRDS(file.path(path.to.09.output, sprintf("cluster_markers_subclusters_%s.rds", sub.cluster.id)))
 }
 ```
 
@@ -298,15 +299,15 @@ meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
 meta.data <- meta.data[row.names(s.obj@meta.data), ]
 s.obj <- AddMetaData(object = s.obj, metadata = meta.data$high.ambientRNA, col.name = "high.ambientRNA")
 
-if (file.exists(file.path(path.to.08.output, sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id))) == FALSE){
+if (file.exists(file.path(path.to.09.output, sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id))) == FALSE){
   high.ambientRNA.markers <- FindMarkers(object = s.obj, ident.1 = "yes", ident.2 = "no", group.by = "high.ambientRNA", assay = "RNA", test.use = "wilcox")
   high.ambientRNA.markers.raw <- high.ambientRNA.markers
   high.ambientRNA.markers <- subset(high.ambientRNA.markers, high.ambientRNA.markers$p_val_adj <= 0.05)
-  saveRDS(high.ambientRNA.markers.raw, file.path(path.to.08.output, sprintf("high.ambientRNA.markers_%s.raw.rds", sub.cluster.id)))
-  saveRDS(high.ambientRNA.markers, file.path(path.to.08.output, sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id)))
+  saveRDS(high.ambientRNA.markers.raw, file.path(path.to.09.output, sprintf("high.ambientRNA.markers_%s.raw.rds", sub.cluster.id)))
+  saveRDS(high.ambientRNA.markers, file.path(path.to.09.output, sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id)))
 } else {
-  high.ambientRNA.markers <- readRDS(file.path(path.to.08.output, sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id)))
-  high.ambientRNA.markers.raw <- readRDS(file.path(path.to.08.output, sprintf("high.ambientRNA.markers_%s.raw.rds", sub.cluster.id)))
+  high.ambientRNA.markers <- readRDS(file.path(path.to.09.output, sprintf("high.ambientRNA.markers_%s.rds", sub.cluster.id)))
+  high.ambientRNA.markers.raw <- readRDS(file.path(path.to.09.output, sprintf("high.ambientRNA.markers_%s.raw.rds", sub.cluster.id)))
 }
 
 high.ambientRNA.markers <- high.ambientRNA.markers %>% rownames_to_column("Gene") %>% rowwise() %>%
