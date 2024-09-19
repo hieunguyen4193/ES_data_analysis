@@ -1,0 +1,147 @@
+---
+title: "Update analysis on the two samples d4_LPS d4_SPF"
+author:
+  - "trnguyen@ukaachen.de"
+date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    number_sections: true
+    df_print: paged
+    toc: true
+    toc_float:
+      toc_collapsed: false
+    toc_depth: 3
+    theme: lumen
+params:
+  outdir: NA
+  PROJECT: NA
+  s.obj.name: NA
+  sub.cluster.id: NA
+---
+  
+```{css zoom-lib-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
+
+```{js zoom-jquery, echo = FALSE}
+$(document).ready(function() {
+  $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+  // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+<style type="text/css">
+    div.datatables { height: auto !important;}
+</style>
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
+#####----------------------------------------------------------------------#####
+#
+# trnguyen@ukaachen.de
+#
+#####----------------------------------------------------------------------#####
+path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/EStange/official_SeuratV4"
+scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline/processes_src"
+source(file.path(scrna_pipeline_src, "import_libraries.R"))
+source(file.path(scrna_pipeline_src, "helper_functions.R"))
+
+#####----------------------------------------------------------------------#####
+# CONFIGURATIONS 
+#####----------------------------------------------------------------------#####
+analysis.round <- "1st"
+
+chosen.seed <- 42
+num.dim.integration <- 25 
+num.PCA <- 25
+num.dim.cluster <- 25
+num.PC.used.in.Clustering <- 25
+
+sample1 <- "d4_LPS"
+sample2 <- "d4_SPF"
+
+if ("heatmaply" %in% installed.packages() == FALSE){
+  install.packages("heatmaply")
+}
+path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/processes_src"
+
+outdir <- "/home/hieunguyen/CRC1382/outdir"
+PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
+sub.cluster.id <- "Myeloid_Basophils"
+s.obj.name <- "all_sobj.integrated.rds"
+
+# outdir <- params$outdir
+# PROJECT <- params$PROJECT
+# sub.cluster.id <- params$sub.cluster.id
+# s.obj.name <- params$s.obj.name
+
+path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
+
+path.to.01.output <- file.path(path.to.main.output, "01_output")
+path.to.02.output <- file.path(path.to.main.output, "02_output")
+path.to.03.output <- file.path(path.to.main.output, "03_output")
+path.to.04.output <- file.path(path.to.main.output, "04_output")
+path.to.08.output <- file.path(path.to.main.output, "08_output", sub.cluster.id)
+
+s.obj <- readRDS(file.path(path.to.08.output, sprintf("%s.remove_contam_T_B_cells.rds", sub.cluster.id)))
+```
+
+## UMAP after removing T/B contaminated cells
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, group.by = "celltype")
+```
+
+## Ambient RNA levels on UMAP
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=10}
+FeaturePlot(object = s.obj, reduction = "INTE_UMAP", features = "AmbientRNA", split.by = "name")
+```
+
+## Ambient RNA levels, violin plot
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=10}
+VlnPlot(object = s.obj, features = "AmbientRNA", split.by = "name")
+```
+
+# Compare UMI and RNA counts between d4_LPS and d4_SPF
+
+Note Total RNA count per clusters and additionally in ambient RNA contaminated Clusters* in comparison between d4_LPS vs. d4_SPF
+
+- `nFeature_RNA`: Number of genes that have > 0 reads in each cell. 
+
+- `nCount_RNA`: number of reads in each cell. 
+
+## nCount_RNA {.tabset}
+### UMAP
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=10}
+FeaturePlot(object = s.obj, split.by = "name", features = c("nCount_RNA"), label = TRUE, label.size = 8, reduction = "INTE_UMAP")
+```
+
+### Violin plot
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=10}
+VlnPlot(object = s.obj, features = c("nCount_RNA"), split.by = "name")
+```
+
+## nFeature_RNA {.tabset}
+### UMAP
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=10}
+FeaturePlot(object = s.obj, split.by = "name", features = c("nFeature_RNA"), label = TRUE, label.size = 8, reduction = "INTE_UMAP")
+```
+
+### Violin plot
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=10}
+VlnPlot(object = s.obj, features = c("nFeature_RNA"), split.by = "name")
+```
+
+# Extract cells from "contamninated ambient RNA" clusters
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=10}
+ambientRNA.cells <- colnames(subset(s.obj, ambientRNA.cluster == "yes"))
+DimPlot(object = s.obj, reduction = "INTE_UMAP", cells.highlight = ambientRNA.cells, split.by = "name")
+```
+

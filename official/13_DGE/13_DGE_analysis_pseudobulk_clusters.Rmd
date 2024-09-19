@@ -80,18 +80,18 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-# sample1 <- params$sample1
-# sample2 <- params$sample2
-# cluster.id <- params$cluster.id
-# path.to.s.obj <- params$path.to.s.obj
-# path.to.save.output <- params$path.to.save.output
-# cluster.id <- params$cluster.id
+sample1 <- params$sample1
+sample2 <- params$sample2
+cluster.id <- params$cluster.id
+path.to.s.obj <- params$path.to.s.obj
+path.to.save.output <- params$path.to.save.output
+cluster.id <- params$cluster.id
 
-sample1 <- "adult_SPF"
-sample2 <- "SC11"
-cluster.id <- 21
-path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/remove_d4_LPS_SC5/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/13_output/from_03_output/remove_d4_LPS_SC5/adult_SPF_SC11/part2/cluster_21"
+# sample1 <- "adult_SPF"
+# sample2 <- "SC11"
+# cluster.id <- 21
+# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/remove_d4_LPS_SC5/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/13_output/from_03_output/remove_d4_LPS_SC5/adult_SPF_SC11/part2/cluster_21"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
