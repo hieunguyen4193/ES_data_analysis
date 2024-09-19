@@ -118,6 +118,9 @@ print(sprintf("Sample 2: %s", sample2))
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 s.obj <- readRDS(path.to.s.obj)
+if ("seurat_clusters" %in% colnames(s.obj@meta.data)){
+  s.obj$seurat_clusters <- NULL
+}
 s.obj.original <- s.obj
 ```
 
