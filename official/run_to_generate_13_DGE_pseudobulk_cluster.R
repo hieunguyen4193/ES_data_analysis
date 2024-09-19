@@ -44,24 +44,29 @@ for (output.index in names(samplesheets)){
     meta.data <- s.obj@meta.data %>%
       rowwise() %>%
       mutate(name_ht = sprintf("%s_%s", name, HTO_classification))
-    countdf <- table(meta.data$name_ht, s.obj$cca.cluster.0.5) %>% as.data.frame() %>%
+    countdf <- table(meta.data$name_ht, meta.data$cca.cluster.0.5) %>% as.data.frame() %>%
       subset(grepl("Hashtag", Var1) == TRUE) %>%
       pivot_wider(names_from = "Var1", values_from = "Freq") %>% column_to_rownames("Var2")
     
     for (j in seq(1, nrow(comparison.samplesheet))){
       sample1 <- comparison.samplesheet[j, ][["sample1"]]
       sample2 <- comparison.samplesheet[j, ][["sample2"]]
-      countdf$count.sample1 <- unlist(lapply(
-        row.names(countdf), function(x){
-          to_vec(for (item in names(countdf[x, ])) if(grepl(sample1, item) & countdf[x, ][[item]] != 0) item) %>% length()
+      tmp.countdf <- countdf[, to_vec(for (item in colnames(countdf)) if(str_split(item, "_Hashtag")[[1]][[1]] == sample1 | str_split(item, "_Hashtag")[[1]][[1]] == sample2) item)]
+      condition <- function(row) {
+        all(row > 1)
+      }
+      tmp.countdf$check <- apply(tmp.countdf, 1, condition)
+      tmp.countdf$count.sample1 <- unlist(lapply(
+        row.names(tmp.countdf), function(x){
+          to_vec(for (item in names(tmp.countdf[x, ])) if(sample1 == str_split(item, "_Hashtag")[[1]][[1]] & tmp.countdf[x, ][[item]] != 0) item) %>% length()
         }
       )) 
-      countdf$count.sample2 <- unlist(lapply(
-        row.names(countdf), function(x){
-          to_vec(for (item in names(countdf[x, ])) if(grepl(sample2, item) & countdf[x, ][[item]] != 0) item) %>% length()
+      tmp.countdf$count.sample2 <- unlist(lapply(
+        row.names(tmp.countdf), function(x){
+          to_vec(for (item in names(tmp.countdf[x, ])) if(sample2 == str_split(item, "_Hashtag")[[1]][[1]] & tmp.countdf[x, ][[item]] != 0) item) %>% length()
         }
       )) 
-      available.clusters <- row.names(subset(countdf, countdf$count.sample1 > 1 & countdf$count.sample2 > 1))
+      available.clusters <- row.names(subset(tmp.countdf, tmp.countdf$count.sample1 > 1 & tmp.countdf$count.sample2 > 1 & tmp.countdf$check == TRUE))
       for (cluster.id in available.clusters){
         if (output.index == "03_output"){
           path.to.save.html <- file.path(output.dir, 

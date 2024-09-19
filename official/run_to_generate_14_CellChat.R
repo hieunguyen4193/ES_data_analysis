@@ -34,7 +34,8 @@ dir.create(output.dir, showWarnings = FALSE, recursive = TRUE)
 
 samplesheets <- list(
   `03_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_03_output_simplified.xlsx")),
-  `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output_simplified.xlsx"))
+  `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output_simplified.xlsx")),
+  `12_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx"))
 )
 
 all.samples <- c("adult_GF",
@@ -95,6 +96,38 @@ for (sample.id in all.samples){
                                                   integration.case, 
                                                   regression.mode, 
                                                   filter.mode, 
+                                                  sample.id, 
+                                                  "part1")
+        
+        input.params <- list(
+          sample.id = sample.id,
+          filter10cells = filter10cells,
+          path.to.s.obj = path.to.s.obj,
+          path.to.save.output = path.to.save.CellChat.output
+        )
+      } else if (output.index == "12_output"){
+        integration.case <- input.samplesheet[row_i, ][["integration.case"]]
+        regression.mode <- input.samplesheet[row_i, ][["regression.mode"]]
+        filter.mode <- input.samplesheet[row_i, ][["filter.mode"]]
+        sub.cluster.id <- input.samplesheet[row_i, ][["sub.cluster.id"]]
+        
+        path.to.s.obj <- input.samplesheet[row_i, ][["path"]]
+        
+        path.to.save.html <- file.path(output.dir, 
+                                       sprintf("from_%s", output.index), 
+                                       integration.case, 
+                                       regression.mode, 
+                                       filter.mode, 
+                                       sub.cluster.id,
+                                       sample.id)
+        output.file.name <- sprintf("%s.%s.CellChat_single_sample.html", sample.id, sub.cluster.id)
+        
+        path.to.save.CellChat.output <- file.path(path.to.14.output, 
+                                                  sprintf("from_%s", output.index), 
+                                                  integration.case, 
+                                                  regression.mode, 
+                                                  filter.mode, 
+                                                  sub.cluster.id,
                                                   sample.id, 
                                                   "part1")
         

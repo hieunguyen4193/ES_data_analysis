@@ -57,4 +57,4 @@ tmp.12.output <- data.frame(
   sub.cluster.id = to_vec( for(item in all.12.results) str_split(item, "/")[[1]][[13]]),
   path = all.12.results
 )
-writexl::write_xlsx(tmp.10.output, file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx"))
+writexl::write_xlsx(tmp.12.output, file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx"))

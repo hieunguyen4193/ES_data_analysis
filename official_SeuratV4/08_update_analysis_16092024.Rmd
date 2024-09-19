@@ -149,16 +149,26 @@ DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE,
 
 # Remove T-cell and B-cell contamniated
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+source(file.path(path.to.main.src, "run_integration.R"))
+
 s.obj <- subset(s.obj, celltype %in% c("T cell contaminated", "B cell contaminated") == FALSE)
 s.obj.ambientRNA <- subset(s.obj, ambientRNA.cluster == "yes")
 
 ##### re integration after removing clusters
 if (file.exists(file.path(path.to.08.output, sprintf("%s.remove_contam_T_B_cells.rds", sub.cluster.id))) == FALSE){
-  
+  s.obj <- run_integration_after_subsetting(s.obj)
   saveRDS(s.obj, file.path(path.to.04.output, sprintf("%s.remove_contam_T_B_cells.rds", sub.cluster.id)))
   
 } else {
   s.obj <- readRDS(file.path(path.to.04.output, sprintf("%s.remove_contam_T_B_cells.rds", sub.cluster.id)))
+}
+
+if (file.exists(file.path(path.to.08.output, sprintf("%s.remove_contam_T_B_cells.ambientRNAonly.rds", sub.cluster.id))) == FALSE){
+  s.obj.ambientRNA <- run_integration_after_subsetting(s.obj.ambientRNA)
+  saveRDS(s.obj.ambientRNA, file.path(path.to.04.output, sprintf("%s.remove_contam_T_B_cells.ambientRNAonly.rds", sub.cluster.id)))
+  
+} else {
+  s.obj.ambientRNA <- readRDS(file.path(path.to.04.output, sprintf("%s.remove_contam_T_B_cells.ambientRNAonly.rds", sub.cluster.id)))
 }
 ```
 
