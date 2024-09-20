@@ -91,7 +91,7 @@ sample1 <- "d4_LPS"
 sample2 <- "d4_SPF"
 path.to.s.obj <- "/home/hieunguyen/CRC1382/outdir/EStange_20240411_SeuratV4_reduced_RNAcontam_0/data_analysis/08_output/Myeloid_Basophils/Myeloid_Basophils.remove_contam_T_B_cells.rds"
 path.to.save.output <- "/home/hieunguyen/CRC1382/outdir/EStange_20240411_SeuratV4_reduced_RNAcontam_0/data_analysis/05_output"
-
+cluster.id <- 1
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
 library(clusterProfiler)
@@ -124,7 +124,7 @@ all.genes.in.Mm.db <- AnnotationDbi::keys(org.Mm.eg.db, keytype = "SYMBOL")
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 TR_genes_patterns <- c("Trav", "Traj", "Trac", "Trbv", "Trbd", "Trbj", "Trbc",
                              "Trgv", "Trgj", "Trgc", "Trdv", "Trdc", "Trdj") 
-DefaultAssay(s.obj.original) <- "SCT"
+DefaultAssay(s.obj.original) <- "RNA"
 
 all_genes <- row.names(s.obj.original)
       
@@ -146,7 +146,7 @@ library(DESeq2)
 input.s.obj <- s.obj.original
 
 path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/EStange/official_SeuratV4"
-source(file.path(path.to.project.src, "13_helper_functions.R"))
+source(file.path(path.to.project.src, "05_helper_functions.R"))
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
@@ -284,7 +284,7 @@ For all significant pathways, we generate a bar-plot showing all Normalized Enri
 `set.seed(42)` and set `seed = TRUE` in the functions of `clusterProfiler` to ensure reproducibility.
 
 
-# Pathway analysis results for the pseudobulk SCT DE test
+# Pathway analysis results for the pseudobulk RNA DE test
 
 ```{r, echo=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 diff.markers.df <- resdf
