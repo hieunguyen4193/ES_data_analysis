@@ -3,8 +3,8 @@ run_pseudobulk_dge <- function(input.s.obj, sample1, sample2){
   s.obj[[sample1]] <- subset(input.s.obj, name == sample1)
   s.obj[[sample2]] <- subset(input.s.obj, name == sample2)
   
-  DefaultAssay(s.obj[[sample1]]) <- "SCT"
-  DefaultAssay(s.obj[[sample2]]) <- "SCT"
+  DefaultAssay(s.obj[[sample1]]) <- "RNA"
+  DefaultAssay(s.obj[[sample2]]) <- "RNA"
   
   hashtag.cells <- hash()
   hashtag.cells[[sample1]] <- hash()
@@ -32,7 +32,7 @@ run_pseudobulk_dge <- function(input.s.obj, sample1, sample2){
   pseudobulk.matrix <- data.frame(Gene = rownames(s.obj[[sample1]]))
   for (sample.id in c(sample1, sample2)){
     count.matrix[[sample.id]] <- hash()
-    tmp.count.matrix <- GetAssayData(object = s.obj[[sample.id]], slot = "counts", assay = "SCT")
+    tmp.count.matrix <- GetAssayData(object = s.obj[[sample.id]], slot = "counts", assay = "RNA")
     for (ht in all.ht[[sample.id]]){
       tmp <- tmp.count.matrix[, hashtag.cells[[sample.id]][[ht]]]
       rowsum.tmp <- rowSums(tmp)
