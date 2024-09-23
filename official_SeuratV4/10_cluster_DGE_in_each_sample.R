@@ -50,14 +50,34 @@ all.s.obj <- list(
 )
 
 cluster.markers <- list()
-
 if (file.exists(file.path(path.to.10.output, "sample_cluster_markers.rds")) == FALSE){
   for (sample.id in names(all.s.obj)){
     tmp <- FindAllMarkers(object = all.s.obj[[sample.id]], assay = "RNA", test.use = "wilcox")
     cluster.markers[[sample.id]] <- subset(tmp, tmp$p_val_adj <= 0.05 & tmp$avg_log2FC > 0)    
-    saveRDS(cluster.markers, file.path(path.to.10.output, "sample_cluster_markers.rds"))
-  } else {
-    cluster.markers <- readRDS(file.path(path.to.10.output, "sample_cluster_markers.rds"))
   }
+  saveRDS(cluster.markers, file.path(path.to.10.output, "sample_cluster_markers.rds"))
+} else {
+  cluster.markers <- readRDS(file.path(path.to.10.output, "sample_cluster_markers.rds"))
+}
+
+available.clusters <- intersect(
+  unique(cluster.markers$d4_LPS$cluster),
+  unique(cluster.markers$d4_SPF$cluster)
+)
+
+for (cluster.id in available.clusters){
+  dir.create(file.path(path.to.10.output, sprintf("compare_clusterDEG_cluster%s", cluster.id)), showWarnings = FALSE, recursive = TRUE)
+  de.gene.LPS <- subset(cluster.markers$d4_LPS, cluster.markers$d4_LPS$cluster == cluster.id)$gene
+  de.gene.SPF <- subset(cluster.markers$d4_SPF, cluster.markers$d4_SPF$cluster == cluster.id)$gene
+  
+  intersect.genes <- intersect(de.gene.LPS, de.gene.SPF)
+  in.LPS.only <- setdiff(de.gene.LPS, de.gene.SPF)
+  in.SPF.only <- setdiff(de.gene.SPF, de.gene.LPS)
+  writexl::write_xlsx(data.frame(intersect.genes = intersect.genes),
+                      file.path(path.to.10.output, sprintf("compare_clusterDEG_cluster%s", cluster.id), "DEG_in_both_LPS_SPF.xlsx"))
+  writexl::write_xlsx(data.frame(in.LPS.only = in.LPS.only),
+                      file.path(path.to.10.output, sprintf("compare_clusterDEG_cluster%s", cluster.id), "DEG_in_LPS_only.xlsx"))
+  writexl::write_xlsx(data.frame(in.SPF.only = in.SPF.only),
+                      file.path(path.to.10.output, sprintf("compare_clusterDEG_cluster%s", cluster.id), "DEG_in_SPF_only.xlsx"))
 }
 
