@@ -97,7 +97,6 @@ genes.to.exclude <- unlist(lapply(all_genes, function(x){
 genes.to.exclude <- subset(genes.to.exclude, is.na(genes.to.exclude) == FALSE)
 genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
 
-data.matrix <- GetAssayData(object = s.obj, assay = "SCT", slot = "data")
 ```
 
 # Dataset overview

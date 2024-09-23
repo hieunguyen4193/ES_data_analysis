@@ -80,4 +80,3 @@ for (cluster.id in available.clusters){
   writexl::write_xlsx(data.frame(in.SPF.only = in.SPF.only),
                       file.path(path.to.10.output, sprintf("compare_clusterDEG_cluster%s", cluster.id), "DEG_in_SPF_only.xlsx"))
 }
-
