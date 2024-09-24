@@ -73,13 +73,13 @@ path.to.cellchat2 <- params$path.to.cellchat2
 path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
 
-path.to.s.obj <- params$path.to.s.obj
-sample1 <- params$sample1
-path.to.cellchat1 <- params$path.to.cellchat1
-sample2 <- params$sample2
-path.to.cellchat2 <- params$path.to.cellchat2
-path.to.save.output <- params$path.to.save.output
-filter10cells <- params$filter10cells
+path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/T_cells/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+sample1 <- "d7_GF"
+path.to.cellchat1 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/T_cells/d7_GF/part1/CellChat_object.d7_GF.Filter10.rds"
+sample2 <- "adult_GF"
+path.to.cellchat2 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/T_cells/adult_GF/part1/CellChat_object.adult_GF.Filter10.rds"
+path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/test_output_14"
+filter10cells <- "Filter10"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 s.obj <- readRDS(path.to.s.obj)
@@ -164,11 +164,10 @@ patchwork::wrap_plots(plots = gg)
 # Identify the conserved and context-specific signaling pathways
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 library(uwot)
-path.to.main.src.project <- "/home/hieunguyen/CRC1382/src_2023/EStange/CRC1382_EStange_projects/pipeline_all_samples_deep"
-# path.to.main.src.project <- "/home/uk104163/src_2023/EStange/CRC1382_EStange_projects/pipeline_all_samples_deep"
-source(file.path(path.to.main.src.project, "report_templates", "09_CellChat", "netEmbedding.modified.R"))
+# reticulate::install_python(version = '3.8')
+# reticulate::py_install(packages = 'umap-learn')
 
-if (file.exists(file.path(path.to.09.output.CellChatCompare, sprintf("cellchat_merge_object_%s_vs_%s_%s.SimilarityPairwise.rds", sample1, sample2, filter10cells))) == FALSE){
+if (file.exists(file.path(path.to.save.output, sprintf("cellchat_merge_object_%s_vs_%s_%s.SimilarityPairwise.rds", sample1, sample2, filter10cells))) == FALSE){
   cellchat <- computeNetSimilarityPairwise(cellchat, type = "functional")
   #> Compute signaling network similarity for datasets 1 2
   cellchat <- netEmbedding(cellchat, type = "functional")
@@ -183,9 +182,9 @@ if (file.exists(file.path(path.to.09.output.CellChatCompare, sprintf("cellchat_m
   cellchat <- netClustering(cellchat, type = "structural")
   #> Classification learning of the signaling networks for datasets 1 2
   # Visualization in 2D-space
-  saveRDS(cellchat, file.path(path.to.09.output.CellChatCompare, sprintf("cellchat_merge_object_%s_vs_%s_%s.SimilarityPairwise.rds", sample1, sample2, filter10cells)))
+  saveRDS(cellchat, file.path(path.to.save.output, sprintf("cellchat_merge_object_%s_vs_%s_%s.SimilarityPairwise.rds", sample1, sample2, filter10cells)))
 } else {
-  cellchat <- readRDS(file.path(path.to.09.output.CellChatCompare, sprintf("cellchat_merge_object_%s_vs_%s_%s.SimilarityPairwise.rds", sample1, sample2, filter10cells)))
+  cellchat <- readRDS(file.path(path.to.save.output, sprintf("cellchat_merge_object_%s_vs_%s_%s.SimilarityPairwise.rds", sample1, sample2, filter10cells)))
 }
 ```
 
@@ -557,7 +556,6 @@ for (group in names(groups)){
 ## Heatmap
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-
 for (group in names(groups)){
   cat(sprintf("### Group %s {.tabset} \n \n", group))
   cat("\n \n")
@@ -567,11 +565,24 @@ for (group in names(groups)){
     par(mfrow = c(1,1), xpd=TRUE)
     ht <- list()
     for (i in 1:length(object.list)) {
-      ht[[i]] <- netVisual_heatmap(object.list[[i]], signaling = pathways.show, color.heatmap = "Reds",title.name = paste(pathways.show, "signaling ",names(object.list)[i]))
+      tryCatch(
+        {
+          ht[[i]] <- netVisual_heatmap(object.list[[i]], 
+                                 signaling = pathways.show, 
+                                 color.heatmap = "Reds",
+                                 title.name = paste(pathways.show, "signaling ",
+                                                    names(object.list)[i]))
+        }, error = function(e) {
+            return(NULL)
+          }
+        )
     }
-    p <- ComplexHeatmap::draw(ht[[1]] + ht[[2]], ht_gap = unit(0.5, "cm"))
-    print(p)
-    cat("\n \n")
+    if (length(ht) == 2){
+      p <- ComplexHeatmap::draw(ht[[1]] + ht[[2]], 
+                                    ht_gap = unit(0.5, "cm"))
+      print(p)
+      cat("\n \n")            
+    }
   }
 }
 ```
@@ -593,7 +604,6 @@ for (group in names(groups)){
 ```
 
 # Compare the signaling gene expression distribution between different datasets
-
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 
 for (group in names(groups)){
@@ -610,10 +620,7 @@ for (group in names(groups)){
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-#####----------------------------------------------------------------------#####
-##### SAVE R OBJECTS
-#####----------------------------------------------------------------------#####
-saveRDS(cellchat, file.path(path.to.09.output.CellChatCompare, sprintf("cellchat_merge_object_%s_vs_%s_%s.final.rds", sample1, sample2, filter10cells)))
+saveRDS(cellchat, file.path(path.to.save.output, sprintf("cellchat_merge_object_%s_vs_%s_%s.final.rds", sample1, sample2, filter10cells)))
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
