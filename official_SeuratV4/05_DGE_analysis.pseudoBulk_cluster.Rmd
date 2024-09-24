@@ -112,7 +112,7 @@ print(sprintf("Sample 2: %s", sample2))
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 s.obj.original <- readRDS(path.to.s.obj)
-
+s.obj.original <- subset(s.obj.original, name %in% c(sample1, sample2))
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
@@ -143,7 +143,6 @@ genes.to.keep <- setdiff(row.names(s.obj.original), genes.to.exclude)
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 library(DESeq2)
-input.s.obj <- s.obj.original
 
 path.to.project.src <- "/home/hieunguyen/CRC1382/src_2023/EStange/official_SeuratV4"
 source(file.path(path.to.project.src, "05_helper_functions.R"))
@@ -153,7 +152,10 @@ source(file.path(path.to.project.src, "05_helper_functions.R"))
 all.clusters <- unique(s.obj.original$seurat_clusters)
 
 input.s.obj <- subset(s.obj.original, seurat_clusters == cluster.id)
-pseudobulk.dge.output <- run_pseudobulk_dge(input.s.obj = input.s.obj, sample1 = sample1, sample2 = sample2)
+
+pseudobulk.dge.output <- run_pseudobulk_dge(input.s.obj = input.s.obj, 
+                                            sample1 = sample1, 
+                                            sample2 = sample2)
 
 dds = pseudobulk.dge.output$dds
 resdf = pseudobulk.dge.output$resdf

@@ -82,7 +82,6 @@ if (file.exists(file.path(path.to.04.output, "all_sobj.integrated_d4_LPS_d4_SPF_
 } else {
   s.obj <- readRDS(file.path(path.to.04.output, "all_sobj.integrated_d4_LPS_d4_SPF_only.rds"))
 }
-
 ```
 
 # UMAP

@@ -119,7 +119,10 @@ print(sprintf("Sample 2: %s", sample2))
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
 s.obj <- readRDS(path.to.s.obj)
+s.obj <- subset(s.obj, name %in% c(sample1, sample2))
+
 s.obj.original <- s.obj
+
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
@@ -147,7 +150,6 @@ genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
-s.obj <- subset(s.obj, name %in% c(sample1, sample2))
 savename <- sprintf("sample_%s_vs_%s.single_cell.rds", sample1, sample2)
 savename.raw <- sprintf("sample_%s_vs_%s.raw.single_cell.rds", sample1, sample2)
 if (file.exists(file.path(path.to.save.output, savename)) == FALSE){

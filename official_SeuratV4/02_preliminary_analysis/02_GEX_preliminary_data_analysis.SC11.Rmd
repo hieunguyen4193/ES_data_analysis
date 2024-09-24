@@ -519,7 +519,7 @@ library(clusterProfiler)
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 if ("org.Mm.eg.db" %in% installed.packages() == FALSE){
-  BiocManager::install("org.Mm.eg.db")
+  BiocManager::install("org.Mm.eg.db", update = FALSE)
 }
 library("org.Mm.eg.db")
 

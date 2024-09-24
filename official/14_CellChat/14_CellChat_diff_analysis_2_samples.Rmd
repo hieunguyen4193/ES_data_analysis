@@ -14,7 +14,6 @@ output:
     number_sections: true
     theme: lumen
 params:
-  sample.id: NA
   path.to.s.obj: NA
   sample1: NA
   path.to.cellchat1: NA
@@ -66,7 +65,6 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-sample.id <- params$sample.id
 path.to.s.obj <- params$path.to.s.obj
 sample1 <- params$sample1
 path.to.cellchat1 <- params$path.to.cellchat1
@@ -75,10 +73,13 @@ path.to.cellchat2 <- params$path.to.cellchat2
 path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
 
-# sample.id <- "d7_SPF"
-# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/all.samples/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-# filter10cells <- "Filter10"
-# path.to.save.output <- file.path("/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/all.samples", filter10cells, sample.id)
+path.to.s.obj <- params$path.to.s.obj
+sample1 <- params$sample1
+path.to.cellchat1 <- params$path.to.cellchat1
+sample2 <- params$sample2
+path.to.cellchat2 <- params$path.to.cellchat2
+path.to.save.output <- params$path.to.save.output
+filter10cells <- params$filter10cells
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 s.obj <- readRDS(path.to.s.obj)
@@ -608,14 +609,12 @@ for (group in names(groups)){
 }
 ```
 
-
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 #####----------------------------------------------------------------------#####
 ##### SAVE R OBJECTS
 #####----------------------------------------------------------------------#####
 saveRDS(cellchat, file.path(path.to.09.output.CellChatCompare, sprintf("cellchat_merge_object_%s_vs_%s_%s.final.rds", sample1, sample2, filter10cells)))
 ```
-
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 ```

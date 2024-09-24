@@ -29,7 +29,8 @@ all.path.to.s.obj <- list(
   `04_output` = list(
     Myeloid_Basophils = file.path(path.to.04.output, "all_sobj.integrated.rds", "preprocessed_subcluster_obj", sprintf("preprocessed_subclusters_%s.rds", "Myeloid_Basophils")),
     T_cells = file.path(path.to.04.output, "all_sobj.integrated.rds", "preprocessed_subcluster_obj", sprintf("preprocessed_subclusters_%s.rds", "T_cells")),
-    B_cells = file.path(path.to.04.output, "all_sobj.integrated.rds", "preprocessed_subcluster_obj", sprintf("preprocessed_subclusters_%s.rds", "B_cells"))
+    B_cells = file.path(path.to.04.output, "all_sobj.integrated.rds", "preprocessed_subcluster_obj", sprintf("preprocessed_subclusters_%s.rds", "B_cells")),
+    full = file.path(path.to.04.output, "d4_samples_only", "all_sobj.integrated_d4_LPS_d4_SPF_only.rds")
   ),
   `08_output` = list(
     Myeloid_Basophils = list(
