@@ -123,7 +123,7 @@ if (file.exists(file.path(path.to.04.output, "preprocessed_subcluster_obj", spri
   num.PC.used.in.UMAP <- 25
   cluster.resolution  <- 0.5
   
-  s.obj <- readRDS(file.path(path.to.04.output, "sub_cluster_objects", sprintf("sub_cluster_%s_JW.rds", sub.cluster.id)))
+  s.obj <- subset(s.obj.original, seurat_clusters %in% sub.clusters[["all_sobj.integrated.rds"]][[sub.cluster.id]])
   s.obj <- DietSeurat(s.obj)
   
   chosen.assay <- "RNA"
