@@ -93,11 +93,6 @@ sample2 <- params$sample2
 path.to.s.obj <- params$path.to.s.obj
 path.to.save.output <- params$path.to.save.output
 
-# sample1 <- "d4_LPS"
-# sample2 <- "d4_SPF"
-# path.to.s.obj <- "/home/hieunguyen/CRC1382/outdir/EStange_20240411_SeuratV4_reduced_RNAcontam_0/data_analysis/08_output/Myeloid_Basophils/Myeloid_Basophils.remove_contam_T_B_cells.rds"
-# path.to.save.output <- "/home/hieunguyen/CRC1382/outdir/EStange_20240411_SeuratV4_reduced_RNAcontam_0/data_analysis/05_output"
-
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
 library(clusterProfiler)

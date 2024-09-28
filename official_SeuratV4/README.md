@@ -32,3 +32,10 @@ sub.clusters[["all_sobj.integrated.rds"]] <- list(
 - Run `04_subset_d4_samples.Rmd`: this also takes the integrated data object, but extract cells from samples `d4_LPS` and `d4_SPF` only. Output object is saved at `04_output/all_sobj.integrated_d4_LPS_d4_SPF_only.rds`.
 
 ### 05: Perform differential gene expression analysis between `d4_LPS` vs `d4_SPF`
+Run `run_to_generate_05_*.R` (two versions: for 04 output and for 08 output) to perform differential gene expression analysis. This function calls the Rmarkdown files `05_DGE_analysis.pseudoBulk_cluster.Rmd` and `05_DGE_analysis.Rmd`. 
+
+### Further downstream analysis based on Ambient RNA level of the cells
+
+Run `prepare_data_for_further_analysis_with_ambientRNA_cells.R` to prepare the data: select cells based on Ambient RNA contamination levels. 
+
+

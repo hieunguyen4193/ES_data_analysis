@@ -70,6 +70,7 @@ for (output.index in names(all.path.to.s.obj)){
 ##### Run to generate DGE in 05_DGE_analysis.pseudoBulk_cluster.Rmd
 #####----------------------------------------------------------------------#####
 for (output.index in names(all.path.to.s.obj)){
+  
   for (celltype in names(all.path.to.s.obj[[output.index]])){
     for (sub.cluster.idx in names(all.path.to.s.obj[[output.index]][[celltype]])){
       path.to.s.obj <- all.path.to.s.obj[[output.index]][[celltype]][[sub.cluster.idx]]
@@ -116,4 +117,5 @@ for (output.index in names(all.path.to.s.obj)){
       }
     }
   }
+  
 }
