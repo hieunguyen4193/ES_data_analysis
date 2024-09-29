@@ -34,8 +34,12 @@ all.path.to.s.obj <- list(
   ),
   `08_output` = list(
     Myeloid_Basophils = list(
-      ambientRNAonly = file.path(path.to.08.output, "Myeloid_Basophils", "Myeloid_Basophils.remove_contam_T_B_cells.ambientRNAonly.rds"),
-      all_cells = file.path(path.to.08.output, "Myeloid_Basophils", "Myeloid_Basophils.remove_contam_T_B_cells.rds")
+      ambientRNAonly = file.path(path.to.08.output, 
+                                 "Myeloid_Basophils", 
+                                 "Myeloid_Basophils.remove_contam_T_B_cells.ambientRNAonly.rds"),
+      all_cells = file.path(path.to.08.output, 
+                            "Myeloid_Basophils", 
+                            "Myeloid_Basophils.remove_contam_T_B_cells.rds") # all cells after removing B T cells contamination
     )
   )
 )

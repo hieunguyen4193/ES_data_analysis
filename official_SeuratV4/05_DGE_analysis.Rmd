@@ -117,7 +117,17 @@ s.obj <- readRDS(path.to.s.obj)
 s.obj <- subset(s.obj, name %in% c(sample1, sample2))
 
 s.obj.original <- s.obj
+```
 
+# UMAP
+## All cells in all samples
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
+DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE, repel = TRUE)
+```
+
+## Split by samples
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=28, fig.height=10}
+DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE, repel = TRUE, split.by = "name")
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
@@ -142,6 +152,143 @@ genes.to.exclude <- unlist(lapply(all_genes, function(x){
 }))
 genes.to.exclude <- subset(genes.to.exclude, is.na(genes.to.exclude) == FALSE)
 genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
+```
+
+# Ambient RNA contamination on UMAP 
+
+## All samples, integrated
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+FeaturePlot(object = s.obj, features = "AmbientRNA", label = TRUE, label.size = 8, reduction = "INTE_UMAP")
+```
+
+## Each sample, integrated UMAP {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- FeaturePlot(object = subset(s.obj, name == sample.id), features = "AmbientRNA", label = TRUE, label.size = 8, reduction = "INTE_UMAP")
+  print(p)
+  cat("\n \n")
+}
+```
+
+## Each sample, Violin plot ambient RNA contamination level in each cluster {.tabset}
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+for (sample.id in unique(s.obj$name)){
+  cat(sprintf("### Sample %s \n", sample.id))
+  p <- VlnPlot(object = subset(s.obj, name == sample.id), features = "AmbientRNA")
+  print(p)
+  cat("\n \n")
+}
+```
+
+## UMAP: highlight cells (red) that have >= 50% ambient RNA contamination
+```{r echo=FALSE, fig.height=10, fig.width=14, message=FALSE, warning=FALSE, results='asis'}
+high.ambientRNA.cells <- subset(s.obj@meta.data, s.obj@meta.data$AmbientRNA >= 0.5) %>% row.names()
+
+meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
+  rowwise() %>%
+  mutate(high.ambientRNA = ifelse(barcode %in% high.ambientRNA.cells, "yes", "no")) %>%
+  column_to_rownames("barcode")
+meta.data <- meta.data[row.names(s.obj@meta.data), ]
+s.obj <- AddMetaData(object = s.obj, metadata = meta.data$high.ambientRNA, col.name = "high.ambientRNA")
+```
+
+
+```{r echo=FALSE, fig.height=10, fig.width=14, message=FALSE, warning=FALSE, results='asis'}
+DimPlot(object = s.obj, reduction = "INTE_UMAP", cells.highlight = high.ambientRNA.cells,
+        cols.highlight = "red", split.by = "name")
+```
+
+# Differential gene expression analysis: high ambient RNA contaminated cells vs others
+
+- positive logFC indicates that the gene is higher in the "ambient RNA contaminated cells >= 50%" cells. 
+
+- negative logFC indicates that the gene is lower in the "ambient RNA contaminated cells >= 50%" cells.
+
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+if (file.exists(file.path(path.to.05.output, "high.ambientRNA.markers.rds")) == FALSE){
+  high.ambientRNA.markers <- FindMarkers(object = s.obj, ident.1 = "yes", ident.2 = "no", group.by = "high.ambientRNA", assay = "RNA", test.use = "wilcox")
+  high.ambientRNA.markers.raw <- high.ambientRNA.markers
+  high.ambientRNA.markers <- subset(high.ambientRNA.markers, high.ambientRNA.markers$p_val_adj <= 0.05)
+  saveRDS(high.ambientRNA.markers.raw, file.path(path.to.05.output, "high.ambientRNA.markers.raw.rds"))
+  saveRDS(high.ambientRNA.markers, file.path(path.to.05.output, "high.ambientRNA.markers.rds"))
+} else {
+  high.ambientRNA.markers <- readRDS(file.path(path.to.05.output, "high.ambientRNA.markers.rds"))
+  high.ambientRNA.markers.raw <- readRDS(file.path(path.to.05.output, "high.ambientRNA.markers.raw.rds"))
+}
+
+high.ambientRNA.markers <- high.ambientRNA.markers %>% rownames_to_column("Gene") %>% rowwise() %>%
+  mutate(abs.avg_log2FC = abs(avg_log2FC)) %>% arrange(desc(abs.avg_log2FC))
+```
+
+## Full table: All differentially expressed genes
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+high.ambientRNA.markers %>% create_dt()
+```
+
+## Volcano plot
+```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
+input.df <- high.ambientRNA.markers.raw %>% rownames_to_column("Gene")
+all.pvals <- unique(input.df$p_val_adj)
+all.pvals <- all.pvals[all.pvals != 0]
+min.pval.adj <- min(all.pvals)
+input.df <- input.df %>% rowwise() %>%
+  mutate(p_val_adj = ifelse(p_val_adj == 0, min.pval.adj, p_val_adj))
+
+top10up.genes <- input.df %>% subset(p_val_adj <= 0.05 & avg_log2FC > 0) %>% arrange(desc(avg_log2FC)) %>% head(10)
+top10down.genes <- input.df %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(10)
+input.df <- input.df %>%
+rowwise() %>%
+mutate(sig = ifelse(p_val_adj <= 0.05, "Sig.", "not Sig.")) %>%
+  mutate(show.gene.name = ifelse(Gene %in% c(top10up.genes$Gene, top10down.genes$Gene), Gene, NA))
+  
+cutoff.adjp <- 0.05
+volcano.plot <- ggplot(data=input.df, aes(x=avg_log2FC, y=-log10(p_val_adj ), col = sig, label=Gene)) +
+  geom_point() +
+  geom_label_repel(label = input.df$show.gene.name, size = 8, max.overlaps = 100) +
+  scale_color_manual(values=c("#c0d2f0", "#f28095")) +
+  theme_minimal() +
+  geom_vline(xintercept=c(-1, 1), col="#9a9fa6", linetype='dotted') +
+  geom_hline(yintercept=-log10(cutoff.adjp), col="#9a9fa6", linetype='dotted') +
+  theme_bw() +
+  theme(plot.title = element_text(hjust=0.5, face="bold", size = 12), axis.text=element_text(size=12))
+volcano.plot
+```
+
+
+# Differential gene expression test between 2 samples
+
+## Number of cells in each cluter, each sample
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+count.cluster.sample <- table(s.obj@meta.data %>% 
+        subset(select = c(seurat_clusters, name))) %>% 
+  as.data.frame()  %>%
+  pivot_wider(names_from = "name", values_from = "Freq")
+count.cluster.sample[[sprintf("pct_%s", sample1)]] <- count.cluster.sample[[sample1]]/sum(count.cluster.sample[[sample1]])
+count.cluster.sample[[sprintf("pct_%s", sample2)]] <- count.cluster.sample[[sample2]]/sum(count.cluster.sample[[sample2]])
+
+sum.count.clusters <- count.cluster.sample[[sample1]] + count.cluster.sample[[sample2]]
+
+count.cluster.sample[[sprintf("pct_in_cluster_%s", sample1)]] <- count.cluster.sample[[sample1]]/sum.count.clusters
+count.cluster.sample[[sprintf("pct_in_cluster_%s", sample2)]] <- count.cluster.sample[[sample2]]/sum.count.clusters
+
+count.cluster.sample %>%  mutate_if(is.numeric, round, 6) %>% create_dt()
+```
+
+### Stacked bar plot: percentage of cells coming from each sample in each cluster
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+plotdf <- count.cluster.sample[, c("seurat_clusters", sprintf("pct_in_cluster_%s", sample1), sprintf("pct_in_cluster_%s", sample2))] %>%
+  pivot_longer(!seurat_clusters, names_to = "Sample", values_to = "pct")
+
+plotdf %>% ggplot(aes(x = seurat_clusters, y = pct, fill = Sample)) + geom_bar(stat = "identity")
+```
+
+## Number of cells in each sample (= number of cells in each pseudobulk sample)
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
+table(s.obj@meta.data %>% 
+        subset(select = c(name))) %>% 
+  as.data.frame() %>% create_dt()
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
@@ -171,7 +318,9 @@ if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
     }
     
     if (count.sample1 >= 10 & count.sample2 >= 10){
-      tmp.de.markers <- FindMarkers(object = tmp.s.obj, ident.1 = sample2, ident.2 = sample1, 
+      tmp.de.markers <- FindMarkers(object = tmp.s.obj, 
+                                    ident.1 = sample1, 
+                                    ident.2 = sample2, 
                                   group.by = "name", test.use = "wilcox", assay = "RNA",
                                   features = intersect(row.names(s.obj), genes.to.keep), recorrect_umi = FALSE)
       
@@ -402,7 +551,7 @@ for(cluster.id in all.cluster.ids){
 ## Over-representation analyiss (ORA)
 
 ### GO-ORA {.tabset}
-```{r echo=FALSE, warning=FALSE, results='asis'}
+```{r echo=FALSE, warning=FALSE, results='asis', include=FALSE}
 if (file.exists(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds")) == FALSE){
   go.ora <- hash()
   all.ORA.GO.objects <- hash()
@@ -466,7 +615,7 @@ for (cluster.id in names(go.ora)){
 ```
 
 ### KEGG-ORA {.tabset}
-```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE}
+```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE, include=FALSE}
 if (file.exists(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds")) == FALSE){
   kegg.ora <- hash()
   all.ORA.KEGG.objects <- hash()
@@ -533,7 +682,7 @@ for (cluster.id in names(kegg.ora)){
 
 ## Gene set enrichment analysis
 ### GSEA-GO {.tabset}
-```{r echo=FALSE, warning=FALSE, results='asis'}
+```{r echo=FALSE, warning=FALSE, results='asis', include=FALSE}
 #####----------------------------------------------------------------------#####
 # PREPARATION
 #####----------------------------------------------------------------------#####
@@ -603,7 +752,7 @@ for(cluster.id in all.cluster.ids){
 ```
 
 ### GSEA-KEGG {.tabset}
-```{r echo=FALSE, warning=FALSE, results='asis'}
+```{r echo=FALSE, warning=FALSE, results='asis', include=FALSE}
 #####----------------------------------------------------------------------#####
 # PREPARATION
 #####----------------------------------------------------------------------#####
@@ -891,9 +1040,9 @@ pseudo_metadata %>% create_dt()
 ```
 
 ## Table: list of all significantly differential expressed genes
-- **Positive** `logFC` indicates that the gene is up in sample 2, `r params$sample2`.
+- **Positive** `logFC` indicates that the gene is up in sample 1, `r params$sample1`.
 
-- **Negative** `logFC` indicates that the gene is up in sample 1, `r params$sample1`.
+- **Negative** `logFC` indicates that the gene is up in sample 2, `r params$sample2`.
 
 This table is sorted by the column `log2FoldChange` in descending order. 
 
@@ -1028,7 +1177,7 @@ sig.diff.markers.df %>% mutate_if(is.numeric, round, 6) %>% arrange(desc(log2Fol
 
 
 ### GO-ORA
-```{r echo=FALSE, warning=FALSE, results='asis'}
+```{r echo=FALSE, warning=FALSE, results='asis', include=FALSE}
 input.gene.list <- sig.diff.markers.df$Gene
 ora.GO <- enrichGO(gene = input.gene.list,
                     OrgDb = org.Mm.eg.db,
@@ -1045,12 +1194,15 @@ if (is.null(ora.GO) == TRUE){
   ora.GOdf <- as.data.frame(ora.GO)
   ora.GOdf <- ora.GOdf[order(ora.GOdf$p.adjust, decreasing = FALSE),]  
 }
+```
 
+
+```{r echo=FALSE, warning=FALSE, results='asis'}
 ora.GOdf %>% mutate_if(is.numeric, round, 6) %>% create_dt()
 ```
 
 ### KEGG-ORA
-```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE}
+```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE, include=FALSE}
 input.gene.list <- subset(diff.markers.df, diff.markers.df$padj <= 0.05)$Gene 
 
 if (length(input.gene.list) <= 1 | length(intersect(all.genes.in.Mm.db, input.gene.list)) == 0){
@@ -1068,13 +1220,16 @@ if (length(input.gene.list) <= 1 | length(intersect(all.genes.in.Mm.db, input.ge
     ora.KEGGdf <- ora.KEGGdf[order(ora.KEGGdf$p.adjust), ]    
   }
 }
+```
 
+
+```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE}
 ora.KEGGdf %>% mutate_if(is.numeric, round, 6) %>% create_dt()
 ```
 
 ## Gene set enrichment analysis (GSEA)
 ### GSEA-GO
-```{r echo=FALSE, warning=FALSE, results='asis'}
+```{r echo=FALSE, warning=FALSE, results='asis', include=FALSE}
 tmp.full.list <- diff.markers.df %>% arrange(desc(log2FoldChange))
 input.gene.list <- tmp.full.list$log2FoldChange
 names(input.gene.list) <- tmp.full.list$Gene
@@ -1101,13 +1256,16 @@ top10_down_nes_pw.GO <- tail(GSEA.GOdf, 10)$Description
 
 top10_up_nes_idx.GO <- head(GSEA.GOdf, 10)$idx
 top10_down_nes_idx.GO <- tail(GSEA.GOdf, 10)$idx
+```
 
+
+```{r echo=FALSE, warning=FALSE, results='asis'}
 GSEA.GOdf %>% mutate_if(is.numeric, round, 6) %>% create_dt()
 
 ```
 
 ### GSEA-KEGG
-```{r echo=FALSE, warning=FALSE, results='asis'}
+```{r echo=FALSE, warning=FALSE, results='asis', include=FALSE}
 tmp.full.list <- diff.markers.df %>% arrange(desc(log2FoldChange))
 
 convertdf <- bitr(tmp.full.list$Gene, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
@@ -1134,7 +1292,10 @@ top10_down_nes_pw.KEGG <- tail(GSEA.KEGGdf, 10)$Description
 
 top10_up_nes_idx.KEGG <- head(GSEA.KEGGdf, 10)$idx
 top10_down_nes_idx.KEGG <- tail(GSEA.KEGGdf, 10)$idx
+```
 
+
+```{r echo=FALSE, warning=FALSE, results='asis'}
 GSEA.KEGGdf %>% mutate_if(is.numeric, round, 6) %>% create_dt()
 ```
 

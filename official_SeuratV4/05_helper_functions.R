@@ -49,7 +49,8 @@ run_pseudobulk_dge <- function(input.s.obj, sample1, sample2){
     str_split(x, "_Hashtag")[[1]][[1]]
   }))
   
-  pseudo_metadata$group <- factor(pseudo_metadata$group, levels = c(sample1, sample2))
+  # log FC = sample1 / sample2, same as the logFC in single cell DE test.
+  pseudo_metadata$group <- factor(pseudo_metadata$group, levels = c(sample2, sample1))
   
   dds <- DESeqDataSetFromMatrix(pseudobulk.matrix, 
                                 colData = pseudo_metadata, 
