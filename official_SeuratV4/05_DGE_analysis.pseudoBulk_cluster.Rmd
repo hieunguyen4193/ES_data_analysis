@@ -48,9 +48,9 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 
 # Differential gene expression for each cluster of cells
 
-- **positive** `logFC` indicates that the gene is highly expressed in the sample 2, `r params$sample2`.
+- **positive** `logFC` indicates that the gene is highly expressed in the sample 1, `r params$sample1`.
 
-- **negative** `logFC` indicates that the gene is highly expressed in the sample 1, `r params$sample1`.
+- **negative** `logFC` indicates that the gene is highly expressed in the sample 2, `r params$sample2`.
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=20, fig.height=12}
@@ -170,9 +170,9 @@ pseudo_metadata %>% create_dt()
 ```
 
 ## Table: list of all significantly differential expressed genes
-- **Positive** `logFC` indicates that the gene is up in sample 2, `r params$sample2`.
+- **Positive** `logFC` indicates that the gene is up in sample 1, `r params$sample1`.
 
-- **Negative** `logFC` indicates that the gene is up in sample 1, `r params$sample1`.
+- **Negative** `logFC` indicates that the gene is up in sample 2, `r params$sample2`.
 
 This table is sorted by the column `log2FoldChange` in descending order. 
 
