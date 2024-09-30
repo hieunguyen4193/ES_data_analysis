@@ -399,8 +399,8 @@ for (cluster.id in all.clusters.in.de.markers){
     
     if (length(c(top10up.genes$Gene, top10down.genes$Gene)) > 0){
       p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
-                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "RNA") +
-        + scale_fill_gradientn(colours = rev(mapal))
+                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "RNA") + 
+        scale_fill_gradientn(colours = rev(mapal))
     } else {
       p <- ggplot() + ggtitle("No significantly DE genes found or not enough cells to conduct DE test!")
     }
