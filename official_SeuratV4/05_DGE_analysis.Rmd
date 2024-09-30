@@ -386,28 +386,25 @@ library("org.Mm.eg.db")
 
 ## Heatmaps {.tabset}
 
-
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=15}
+mapal <- colorRampPalette(RColorBrewer::brewer.pal(11,"RdBu"))(256)
 for (cluster.id in all.clusters.in.de.markers){
   cat(sprintf("### Cluster %s \n", cluster.id))
   inputdf <- de.markers[[cluster.id]] 
   if ("data" %in% colnames(inputdf) | nrow(inputdf) == 0){
     p <- ggplot() + ggtitle("No significantly DE genes found or not enough cells to conduct DE test!")
   } else {
-    inputdf <- inputdf %>% subset(p_val_adj <= 0.05) %>% arrange(desc(avg_log2FC))
-    top10up.genes <- inputdf %>% head(10)
-    top10down.genes <- inputdf %>% tail(10)
-    tryCatch(
-        {
-          p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
-                         features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "RNA")
-          return(p)
-        },
-        error=function(e) {
-            p <- ggplot() + ggtitle("No data to generate heatmap for this cluster")
-            return(p)
-        }
-    )
+    top10up.genes <- inputdf %>% subset(p_val_adj <= 0.05 & avg_log2FC > 0) %>% arrange(desc(avg_log2FC)) %>% head(20)
+    top10down.genes <- inputdf %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(20)
+    
+    if (length(c(top10up.genes$Gene, top10down.genes$Gene)) > 0){
+      p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
+                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "RNA") +
+        + scale_fill_gradientn(colours = rev(mapal))
+    } else {
+      p <- ggplot() + ggtitle("No significantly DE genes found or not enough cells to conduct DE test!")
+    }
+
   }
   print(p)
   cat("\n \n")
