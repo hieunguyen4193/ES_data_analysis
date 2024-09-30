@@ -1,5 +1,5 @@
 ---
-title: "Update analysis on the two samples d4_LPS d4_SPF"
+title: "Update analysis on the two samples d4_LPS d4_SPF: removing T/B cells"
 author:
   - "trnguyen@ukaachen.de"
 date: "Last update on `r format(Sys.time(), '%d %B, %Y')`"
