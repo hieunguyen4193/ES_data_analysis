@@ -430,9 +430,6 @@ volcano.plot
 ```
 
 # Differential gene expression analysis: high ambient RNA contaminated cells vs others (d4_LPS and d4_SPF samples only)
-
-- positive logFC indicates that the gene is higher in the "ambient RNA contaminated cells >= 50%" cells. - negative logFC indicates that the gene is lower in the "ambient RNA contaminated cells >= 50%" cells.
-
 ```{r echo=FALSE, fig.height=10, fig.width=14, message=FALSE, warning=FALSE, results='asis'}
 s.obj <- subset(s.obj, name %in% c("d4_LPS", "d4_SPF"))
 
@@ -445,6 +442,19 @@ meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>%
 meta.data <- meta.data[row.names(s.obj@meta.data), ]
 s.obj <- AddMetaData(object = s.obj, metadata = meta.data$high.ambientRNA, col.name = "high.ambientRNA")
 
+```
+
+- positive logFC indicates that the gene is higher in the "ambient RNA contaminated cells >= 50%" cells. 
+
+- negative logFC indicates that the gene is lower in the "ambient RNA contaminated cells >= 50%" cells.
+
+## UMAP
+
+```{r echo=FALSE, fig.height=10, fig.width=14, message=FALSE, warning=FALSE, results='asis'}
+DimPlot(object = s.obj, reduction = "INTE_UMAP", label = TRUE, label.box = TRUE, repel = TRUE)
+```
+
+```{r echo=FALSE, fig.height=10, fig.width=14, message=FALSE, warning=FALSE, results='asis'}
 if (file.exists(file.path(path.to.04.output, "preprocessed_subcluster_obj", sprintf("high.ambientRNA.markers_%s.d4_LPS_and_d4_SPF.rds", sub.cluster.id))) == FALSE){
   high.ambientRNA.markers <- FindMarkers(object = s.obj, ident.1 = "yes", ident.2 = "no", group.by = "high.ambientRNA", assay = "RNA", test.use = "wilcox")
   high.ambientRNA.markers.raw <- high.ambientRNA.markers
@@ -465,6 +475,7 @@ high.ambientRNA.markers <- high.ambientRNA.markers %>% rownames_to_column("Gene"
 high.ambientRNA.markers %>% create_dt()
 ```
 
+## Volcano plot
 ```{r results='asis', echo=FALSE, message=FALSE, warning=FALSE, fig.width=14, fig.height=10}
 input.df <- high.ambientRNA.markers.raw %>% rownames_to_column("Gene")
 all.pvals <- unique(input.df$p_val_adj)
