@@ -69,15 +69,15 @@ num.PC.used.in.Clustering <- 25
 
 path.to.src <- "/home/hieunguyen/CRC1382/src/src_pipeline/scRNA_GEX_pipeline/processes_src"
 
-outdir <- "/home/hieunguyen/CRC1382/outdir"
-PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
-s.obj.name <- "all_sobj.integrated.rds"
-sub.cluster.id <- "Myeloid_Basophils"
+# outdir <- "/home/hieunguyen/CRC1382/outdir"
+# PROJECT <- "EStange_20240411_SeuratV4_reduced_RNAcontam_0"
+# s.obj.name <- "all_sobj.integrated.rds"
+# sub.cluster.id <- "Myeloid_Basophils"
 
-# outdir <- params$outdir
-# PROJECT <- params$PROJECT
-# s.obj.name <- params$s.obj.name
-# sub.cluster.id <- params$sub.cluster.id
+outdir <- params$outdir
+PROJECT <- params$PROJECT
+s.obj.name <- params$s.obj.name
+sub.cluster.id <- params$sub.cluster.id
 
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
 
