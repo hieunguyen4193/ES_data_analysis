@@ -75,7 +75,7 @@ library(org.Mm.eg.db)
 
 #####----------------------------------------------------------------------#####
 ##### UPGRADE THE CLUSTERPROFILER PACKAGES
-if (packageVersion("clusterProfiler") != "4.13.3"){
+if (packageVersion("clusterProfiler") != "4.13.4"){
   remove.packages("DOSE")
   remove.packages("GOSemSim")
   remove.packages("yulab.utils")
@@ -93,10 +93,10 @@ sample2 <- params$sample2
 path.to.s.obj <- params$path.to.s.obj
 path.to.save.output <- params$path.to.save.output
 
-# sample1 <- "adult_SPF"
-# sample2 <- "SC11"
+# sample1 <- "d7_SPF"
+# sample2 <- "d7_GF"
 # path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/03_output/remove_d4_LPS_SC5/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/13_output/from_03_output/remove_d4_LPS_SC5/adult_SPF_SC11/part1"
+# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/13_output/from_03_output/remove_d4_LPS_SC5/d7_SPF_d7_GF/part1"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 
@@ -310,9 +310,9 @@ for (cluster.id in all.clusters.in.de.markers){
     top10up.genes <- inputdf %>% subset(p_val_adj <= 0.05 & avg_log2FC > 0) %>% arrange(desc(avg_log2FC)) %>% head(20)
     top10down.genes <- inputdf %>% subset(p_val_adj <= 0.05 & avg_log2FC < 0) %>% arrange(desc(avg_log2FC)) %>% tail(20)
     
-    if (length(c(top10up.genes$Gene, top10down.genes$Gene)) > 0){
-      p <- DoHeatmap(object = subset(s.obj, seurat_clusters == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
-                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "RNA") + 
+    if (length( intersect(c(top10up.genes$Gene, top10down.genes$Gene), row.names(s.obj[["SCT"]]@scale.data)) ) > 0){
+      p <- DoHeatmap(object = subset(s.obj, cca.cluster.0.5 == as.numeric(str_replace(cluster.id, "cluster_", ""))), 
+                     features = c(top10up.genes$Gene, top10down.genes$Gene), group.by = "name", assay = "SCT") + 
         scale_fill_gradientn(colours = rev(mapal))
     } else {
       p <- ggplot() + ggtitle("No significantly DE genes found or not enough cells to conduct DE test!")
