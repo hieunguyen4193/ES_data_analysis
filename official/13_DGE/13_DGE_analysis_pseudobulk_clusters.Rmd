@@ -189,7 +189,12 @@ resdf.sigOnly %>% mutate_if(is.numeric, round, 8) %>% create_dt()
 
 ## Scaled z-score pseudobulk gene expression, all DE genes
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2)))
+if (file.exists(file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.CHECK_FILE.xlsx", sample1, sample2))) == FALSE){
+  writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2)))
+  write.csv(data.frame(status = c("finished saving")), 
+            file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.CHECK_FILE.xlsx", sample1, sample2)))  
+}
+
 ```
 
 

@@ -152,7 +152,8 @@ genes.to.keep <- setdiff(row.names(s.obj), genes.to.exclude)
 s.obj <- subset(s.obj, name %in% c(sample1, sample2))
 savename <- sprintf("sample_%s_vs_%s.single_cell.rds", sample1, sample2)
 savename.raw <- sprintf("sample_%s_vs_%s.raw.single_cell.rds", sample1, sample2)
-if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
+# if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
+if (file.exists(file.path(path.to.save.output, sprintf("%s.CHECK_FILE.csv", savename))) == FALSE){
   de.markers <- hash()
   de.markers.raw <- hash()
   num.clusters <- length(unique(s.obj$cca.cluster.0.5))
@@ -206,6 +207,7 @@ if (file.exists(file.path(path.to.save.output, savename)) == FALSE){
   }
   saveRDS(object = de.markers, file.path(path.to.save.output, savename))
   saveRDS(object = de.markers.raw, file.path(path.to.save.output, savename.raw))
+  write.csv(data.frame(status = c("finished saving")), file.path(path.to.save.output, sprintf("%s.CHECK_FILE.csv", savename)))
 } else {
   de.markers <- readRDS(file.path(path.to.save.output, savename))
   de.markers.raw <- readRDS(file.path(path.to.save.output, savename.raw))
@@ -406,7 +408,8 @@ for(cluster.id in all.cluster.ids){
 
 ### GO-ORA {.tabset}
 ```{r echo=FALSE, warning=FALSE, results='asis'}
-if (file.exists(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds")) == FALSE){
+# if (file.exists(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "ORA_GO.CHECK_FILE.csv")) == FALSE){
   go.ora <- hash()
   all.ORA.GO.objects <- hash()
   for (cluster.id in all.cluster.ids){
@@ -435,6 +438,7 @@ if (file.exists(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.r
   }
   saveRDS(all.ORA.GO.objects, file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds"))
   saveRDS(go.ora, file.path(path.to.save.output, "all_ORA_GO_tables.single_cell.rds"))
+  write.csv(data.frame(status = c("finished saving")), file.path(path.to.save.output, "ORA_GO.CHECK_FILE.csv"))
 } else {
   all.ORA.GO.objects <- readRDS(file.path(path.to.save.output, "all_ORA_GO_objects.single_cell.rds"))
   go.ora <- readRDS(file.path(path.to.save.output, "all_ORA_GO_tables.single_cell.rds"))
@@ -470,7 +474,8 @@ for (cluster.id in names(go.ora)){
 
 ### KEGG-ORA {.tabset}
 ```{r echo=FALSE, warning=FALSE, results='asis', message=FALSE}
-if (file.exists(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds")) == FALSE){
+# if (file.exists(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "ORA_KEGG.CHECK_FILE.csv")) == FALSE){
   kegg.ora <- hash()
   all.ORA.KEGG.objects <- hash()
   for (cluster.id in all.cluster.ids){
@@ -500,6 +505,7 @@ if (file.exists(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell
   }
   saveRDS(all.ORA.KEGG.objects, file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds"))
   saveRDS(kegg.ora, file.path(path.to.save.output, "all_ORA_KEGG_tables.single_cell.rds"))
+  write.csv(data.frame(status = c("finished saving")), file.path(path.to.save.output, "ORA_KEGG.CHECK_FILE.csv"))
 }else {
   all.ORA.KEGG.objects <- readRDS(file.path(path.to.save.output, "all_ORA_KEGG_objects.single_cell.rds"))
   kegg.ora <- readRDS(file.path(path.to.save.output, "all_ORA_KEGG_tables.single_cell.rds"))
@@ -543,7 +549,8 @@ for (cluster.id in names(kegg.ora)){
 go.gsea <- hash()
 all.GSEA.GO.objects <- hash()
 
-if (file.exists(file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds")) == FALSE){
+# if (file.exists(file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "GO_GSEA.CHECK_FILE.csv")) == FALSE){
   for(cluster.id in all.cluster.ids){
   tmp.full.list <- de.markers.raw[[cluster.id]] %>% arrange(desc(avg_log2FC))
   input.gene.list <- tmp.full.list$avg_log2FC
@@ -569,6 +576,7 @@ if (file.exists(file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_ce
 }
   saveRDS(object = go.gsea, file = file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds"))
   saveRDS(object = all.GSEA.GO.objects, file = file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
+  write.csv(data.frame(status = c("finished saving")), file.path(path.to.save.output, "GO_GSEA.CHECK_FILE.csv"))
 } else {
   go.gsea <- readRDS(file.path(path.to.save.output, "GO_GSEA_pathways_tables.single_cell.rds"))
   all.GSEA.GO.objects <- readRDS(file.path(path.to.save.output, "GO_GSEA_all_GO_objects.single_cell.rds"))
@@ -614,7 +622,8 @@ kegg.gsea <- hash()
 all.GSEA.KEGG.objects <- hash()
 
 
-if (file.exists(file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds")) == FALSE){
+# if (file.exists(file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds")) == FALSE | file.exists(file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds")) == FALSE){
+if (file.exists(file.path(path.to.save.output, "KEGG_GSEA.CHECK_FILE.csv")) == FALSE){
   for(cluster.id in all.cluster.ids){
     tmp.full.list <- de.markers.raw[[cluster.id]] %>% arrange(desc(avg_log2FC))
     convertdf <- bitr(tmp.full.list$Gene, fromType="SYMBOL", toType="ENTREZID", OrgDb="org.Mm.eg.db")
@@ -646,6 +655,7 @@ if (file.exists(file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.singl
   }
   saveRDS(object = kegg.gsea, file = file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
   saveRDS(object = all.GSEA.KEGG.objects, file = file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
+  write.csv(data.frame(status = c("finished saving")), file.path(path.to.save.output, "KEGG_GSEA.CHECK_FILE.csv"))
 } else {
   kegg.gsea <- readRDS(file.path(path.to.save.output, "KEGG_GSEA_pathways_tables.single_cell.rds"))
   all.GSEA.KEGG.objects <- readRDS(file.path(path.to.save.output, "KEGG_GSEA_all_KEGG_objects.single_cell.rds"))
@@ -884,8 +894,7 @@ heatmap.full.input <-resdf.sigOnly[, c("Gene", pseudo_metadata$sample.id)] %>% c
 heatmap.full.input.scaled <- (heatmap.full.input - rowSums(heatmap.full.input))/rowSds(as.matrix(heatmap.full.input)) 
 
 heatmap.full.input.scaled <- heatmap.full.input.scaled %>% rownames_to_column("Gene") 
-heatmap.full.input.scaled <- merge(heatmap.full.input.scaled, subset(resdf.sigOnly, select = c(Gene, padj, log2FoldChange, abslog2FoldChange)),
-                                   by.x = "Gene", by.y = "Gene") %>% arrange(desc(log2FoldChange))
+heatmap.full.input.scaled <- merge(heatmap.full.input.scaled, subset(resdf.sigOnly, select = c(Gene, padj, log2FoldChange, abslog2FoldChange)), by.x = "Gene", by.y = "Gene") %>% arrange(desc(log2FoldChange))
 ```
 
 ## Metadata (pseudobulk, 1 hashtag = 1 sample)
@@ -906,7 +915,15 @@ resdf.sigOnly %>% mutate_if(is.numeric, round, 8) %>% create_dt()
 
 ## Scaled z-score pseudobulk gene expression, all DE genes
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=20, fig.height=12}
-writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2)))
+if (file.exists(file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.CHECK_FILE.xlsx", sample1, sample2))) == FALSE){
+  writexl::write_xlsx(heatmap.full.input.scaled, file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.xlsx", sample1, sample2)))
+
+  ##### save CHECK FILE
+  write.csv(data.frame(status = c("finished_saving")),
+            file.path(path.to.save.output, sprintf("heatmap_input_%s_%s_allDEGs.pseudobulk.scaled.CHECK_FILE.xlsx", sample1, sample2)))
+}
+
+
 ```
 
 
