@@ -9,6 +9,8 @@ if ("CellChat" %in% row.names(installed.packages()) == FALSE){
   devtools::install_github("immunogenomics/presto", upgrade = "never")
   devtools::install_github("jinworks/CellChat", upgrade = "never")
   install.packages("https://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_3.4.4.tar.gz", repos = NULL, type = "source")
+  reticulate::install_python(version = '3.8')
+  reticulate::py_install(packages = 'umap-learn')
 } 
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
@@ -55,6 +57,7 @@ all.samples <- c("adult_GF",
 filter10cells <- "Filter10"
 comparison.samplesheet <- read.csv(file.path(path.to.main.src, "13_DGE", "sample_comparision_list.csv"))
 
+rerun <- TRUE
 for (i in seq(1, nrow(comparison.samplesheet))){
   sample1 <- comparison.samplesheet[i, "sample1"]
   sample2 <- comparison.samplesheet[i, "sample2"]
@@ -200,7 +203,8 @@ for (i in seq(1, nrow(comparison.samplesheet))){
       for (param.name in names(input.params)){
         print(sprintf("Param %s: %s", param.name, input.params[[param.name]]))
       }
-      if (file.exists(file.path(path.to.save.html, output.file.name)) == FALSE){
+      if (file.exists(file.path(path.to.save.html, output.file.name)) == FALSE | rerun == TRUE){
+        print(sprintf("Generate the file %s ...", output.file.name))
         rmarkdown::render(path.to.rmd,
                           params = input.params,
                           output_file = output.file.name,

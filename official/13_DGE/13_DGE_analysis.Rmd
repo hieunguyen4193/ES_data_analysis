@@ -1286,7 +1286,6 @@ for (i in top10_down_nes_idx.KEGG){
   print(p)
   cat("\n \n")
 }
-
 ```
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=28, fig.height=20}

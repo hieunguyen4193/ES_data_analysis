@@ -73,12 +73,12 @@ path.to.cellchat2 <- params$path.to.cellchat2
 path.to.save.output <- params$path.to.save.output
 filter10cells <- params$filter10cells
 
-# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/T_cells/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-# sample1 <- "d7_GF"
-# path.to.cellchat1 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/T_cells/d7_GF/part1/CellChat_object.d7_GF.Filter10.rds"
-# sample2 <- "adult_GF"
-# path.to.cellchat2 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/T_cells/adult_GF/part1/CellChat_object.adult_GF.Filter10.rds"
-# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/test_output_14"
+# path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
+# sample1 <- "d7_SPF"
+# path.to.cellchat1 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/d7_SPF/part1/CellChat_object.d7_SPF.Filter10.rds"
+# sample2 <- "d7_GF"
+# path.to.cellchat2 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/d7_GF/part1/CellChat_object.d7_GF.Filter10.rds"
+# path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/14_output/compare_2_samples/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/d7_SPF_vs_d7_GF"
 # filter10cells <- "Filter10"
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
@@ -111,6 +111,10 @@ sample2.clusters <- levels(cellchat.sample2@idents)
 # shared.clusters <- to_vec( for(item in intersect(sample1.clusters, sample2.clusters))  str_replace(item, "cluster_", "") %>% as.numeric())
 # sample1.cells <- subset(s.obj@meta.data, s.obj@meta.data$name == sample1 & s.obj@meta.data$cca.cluster.0.5 %in% shared.clusters) %>% row.names()
 # sample2.cells <- subset(s.obj@meta.data, s.obj@meta.data$name == sample2 & s.obj@meta.data$cca.cluster.0.5 %in% shared.clusters) %>% row.names()
+
+##### temporary fix --> https://github.com/jinworks/CellChat/issues/202
+cellchat.sample1@data.smooth <- cellchat.sample1@data.project
+cellchat.sample2@data.smooth <- cellchat.sample2@data.project
 
 cellchat.sample1 <- subsetCellChat(object = cellchat.sample1, idents.use = intersect(sample1.clusters, sample2.clusters))
 cellchat.sample2 <- subsetCellChat(object = cellchat.sample2, idents.use = intersect(sample1.clusters, sample2.clusters))
@@ -292,7 +296,7 @@ for (pathway.show in all.pathways){
       gg1 <- ggplot() + ggtitle("No increased interaction detected in this pathway")    
       }
   )
-  print(gg1)
+print(gg1)
   cat("\n \n")
 }
 
@@ -392,14 +396,21 @@ for (source.cluster in plt.clusters){
   num.NA.ligand <- nrow(subset(source.net.up, is.na(source.net.up$ligand.pvalues) == TRUE))
   num.NA.receptor <- nrow(subset(source.net.up, is.na(source.net.up$receptor.pvalues) == TRUE))
   
-  if (num.NA.ligand == nrow(source.net.up) | num.NA.receptor == nrow(source.net.up)){
+  # print(sprintf("num NA ligand: %s", num.NA.ligand))
+  # print(sprintf("num NA receptor: %s", num.NA.receptor))
+  
+  if (num.NA.ligand == nrow(source.net.up) | num.NA.receptor == nrow(source.net.up) | length(intersect(source.net.up$pathway_name, all.pathways)) == 0){
     gg1 <- ggplot() + ggtitle("No significant signaling signal to show!")
   } else {
     count.avail.samples <- table(subset(net, net$pair_LG_cluster_name %in% source.net.up$pair_LG_cluster_name)$datasets)
     pairLR.use.up <- source.net.up[, "interaction_name", drop = F]
+    
+    subsetCommunication(cellchat, slot.name = "netP", 
+      sources.use = source.cluster, pairLR.use = pairLR.use.up)
+    
     if (sample1 %in% names(count.avail.samples) == FALSE){
       gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, comparison = c(2),  
-                              angle.x = 90, remove.isolate = T, title.name = paste0("up-regulated signaling in ", names(object.list)[1]), 
+                              angle.x = 90, remove.isolate = T, title.name = paste0("up-regulated signaling in ", names(object.list)[2]), 
                               sources.use = c(source.cluster))
     } else if (sample2 %in% names(count.avail.samples) == FALSE){
       gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.up, comparison = c(1),  
@@ -429,7 +440,7 @@ for (source.cluster in plt.clusters){
   num.NA.ligand <- nrow(subset(source.net.down, is.na(source.net.down$ligand.pvalues) == TRUE))
   num.NA.receptor <- nrow(subset(source.net.down, is.na(source.net.down$receptor.pvalues) == TRUE))
   
-  if (num.NA.ligand == nrow(source.net.down) | num.NA.receptor == nrow(source.net.down)){
+  if (num.NA.ligand == nrow(source.net.down) | num.NA.receptor == nrow(source.net.down) | length(intersect(source.net.down$pathway_name, all.pathways)) == 0){
     gg1 <- ggplot() + ggtitle("No significant signaling signal to show!")
   } else {
     count.avail.samples <- table(subset(net, net$pair_LG_cluster_name %in% source.net.down$pair_LG_cluster_name)$datasets)
