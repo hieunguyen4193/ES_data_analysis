@@ -6,13 +6,12 @@ rm(list = ls())
 
 ##### install CellChat
 if ("CellChat" %in% row.names(installed.packages()) == FALSE){
-  print("Re install Cellchat from its github repo")
   devtools::install_github("immunogenomics/presto", upgrade = "never")
   devtools::install_github("jinworks/CellChat", upgrade = "never")
   install.packages("https://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_3.4.4.tar.gz", repos = NULL, type = "source")
+  reticulate::install_python(version = '3.8')
+  reticulate::py_install(packages = 'umap-learn')
 } 
-reticulate::install_python(version = '3.8')
-reticulate::py_install(packages = 'umap-learn')
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
@@ -24,7 +23,7 @@ dir.create(path.to.save.html, showWarnings = FALSE, recursive = TRUE)
 # get this path to get Cellchat data object for a single sample
 path.to.14.output.single <- file.path(outdir, PROJECT, "data_analysis", "14_output")
 
-path.to.14.output <- file.path(outdir, PROJECT, "data_analysis", "14_output", "compare_2_samples")
+path.to.14.output <- file.path(outdir, PROJECT, "data_analysis", "14_output", "compare_2_samples_testFIX")
 
 path.to.main.src <- "/home/hieunguyen/CRC1382/src_2023/EStange/official"
 path.to.pipeline.src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5"
@@ -34,7 +33,7 @@ source(file.path(path.to.pipeline.src, "processes_src", "import_libraries.R"))
 source(file.path(path.to.pipeline.src, "processes_src", "helper_functions.R"))
 
 src.dir <- "14_CellChat"
-path.to.rmd <- file.path(path.to.main.src, src.dir, "14_CellChat_diff_analysis_2_samples.Rmd")
+path.to.rmd <- file.path(path.to.main.src, src.dir, "14_CellChat_diff_analysis_2_samples.testFIXtmp.Rmd")
 output.dir <- file.path(path.to.save.html, "14_output")
 dir.create(output.dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -63,7 +62,7 @@ for (i in seq(1, nrow(comparison.samplesheet))){
   sample1 <- comparison.samplesheet[i, "sample1"]
   sample2 <- comparison.samplesheet[i, "sample2"]
   if (sample1 == "d10_sPF" & sample2 == "SC12"){
-   print(sprintf("skip this case, when sample1 = %s and sample2 = %s", sample1, sample2))
+    print(sprintf("skip this case, when sample1 = %s and sample2 = %s", sample1, sample2))
   } else {
     for (output.index in names(samplesheets)){
       input.samplesheet <- samplesheets[[output.index]]
