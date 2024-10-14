@@ -62,7 +62,7 @@ rerun <- TRUE
 for (i in seq(1, nrow(comparison.samplesheet))){
   sample1 <- comparison.samplesheet[i, "sample1"]
   sample2 <- comparison.samplesheet[i, "sample2"]
-  if (sample1 == "d10_sPF" & sample2 == "SC12"){
+  if (sample1 %in% c("d10_SPF", "adult_SPF") & sample2 == "SC12"){
    print(sprintf("skip this case, when sample1 = %s and sample2 = %s", sample1, sample2))
   } else {
     for (output.index in names(samplesheets)){

@@ -46,11 +46,6 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
-if ("CellChat" %in% row.names(installed.packages()) == FALSE){
-  devtools::install_github("immunogenomics/presto", upgrade = "never")
-  devtools::install_github("jinworks/CellChat", upgrade = "never")
-} 
-print("CellChat is already installed!")
 library(patchwork)
 options(stringsAsFactors = FALSE)
 library("CellChat")

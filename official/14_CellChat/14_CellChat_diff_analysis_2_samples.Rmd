@@ -50,10 +50,6 @@ script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide', fig.width=14, fig.height=10}
-if ("CellChat" %in% row.names(installed.packages()) == FALSE){
-  devtools::install_github("immunogenomics/presto", upgrade = "never")
-  devtools::install_github("jinworks/CellChat", upgrade = "never")
-} 
 print("CellChat is already installed!")
 library(patchwork)
 options(stringsAsFactors = FALSE)
@@ -168,8 +164,6 @@ patchwork::wrap_plots(plots = gg)
 # Identify the conserved and context-specific signaling pathways
 ```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis', fig.width=14, fig.height=10}
 library(uwot)
-# reticulate::install_python(version = '3.8')
-# reticulate::py_install(packages = 'umap-learn')
 
 if (file.exists(file.path(path.to.save.output, sprintf("cellchat_merge_object_%s_vs_%s_%s.SimilarityPairwise.rds", sample1, sample2, filter10cells))) == FALSE){
   cellchat <- computeNetSimilarityPairwise(cellchat, type = "functional")
@@ -447,7 +441,7 @@ for (source.cluster in plt.clusters){
     pairLR.use.down <- source.net.down[, "interaction_name", drop = F]
     if (sample1 %in% names(count.avail.samples) == FALSE){
       gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, comparison = c(2),  
-                              angle.x = 90, remove.isolate = T, title.name = paste0("down-regulated signaling in ", names(object.list)[1]), 
+                              angle.x = 90, remove.isolate = T, title.name = paste0("down-regulated signaling in ", names(object.list)[2]), 
                               sources.use = c(source.cluster))
     } else if (sample2 %in% names(count.avail.samples) == FALSE){
       gg1 <- netVisual_bubble(cellchat, pairLR.use = pairLR.use.down, comparison = c(1),  

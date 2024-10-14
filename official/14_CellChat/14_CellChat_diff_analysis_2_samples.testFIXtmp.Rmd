@@ -113,8 +113,8 @@ sample2.clusters <- levels(cellchat.sample2@idents)
 # sample2.cells <- subset(s.obj@meta.data, s.obj@meta.data$name == sample2 & s.obj@meta.data$cca.cluster.0.5 %in% shared.clusters) %>% row.names()
 
 ##### temporary fix --> https://github.com/jinworks/CellChat/issues/202
-# cellchat.sample1@data.smooth <- cellchat.sample1@data.project
-# cellchat.sample2@data.smooth <- cellchat.sample2@data.project
+cellchat.sample1@data.smooth <- cellchat.sample1@data.project
+cellchat.sample2@data.smooth <- cellchat.sample2@data.project
 
 cellchat.sample1 <- subsetCellChat(object = cellchat.sample1, idents.use = intersect(sample1.clusters, sample2.clusters))
 cellchat.sample2 <- subsetCellChat(object = cellchat.sample2, idents.use = intersect(sample1.clusters, sample2.clusters))

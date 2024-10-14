@@ -4,14 +4,23 @@
 gc()
 rm(list = ls())
 
+##### rerun Cellchat after tmp fixing bugs
+devtools::install_github("https://github.com/hieunguyen4193/CellChat", upgrade = FALSE)
+reticulate::install_python(version = '3.8')
+reticulate::py_install(packages = 'umap-learn')
+##### BUGS in cellchat: https://github.com/jinworks/CellChat/issues/159
+##### temporary fix --> https://github.com/jinworks/CellChat/issues/202
+# cellchat.sample1@data.smooth <- cellchat.sample1@data.project
+# cellchat.sample2@data.smooth <- cellchat.sample2@data.project
+
 ##### install CellChat
-if ("CellChat" %in% row.names(installed.packages()) == FALSE){
-  devtools::install_github("immunogenomics/presto", upgrade = "never")
-  devtools::install_github("jinworks/CellChat", upgrade = "never")
-  install.packages("https://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_3.4.4.tar.gz", repos = NULL, type = "source")
-  reticulate::install_python(version = '3.8')
-  reticulate::py_install(packages = 'umap-learn')
-} 
+# if ("CellChat" %in% row.names(installed.packages()) == FALSE){
+#   devtools::install_github("immunogenomics/presto", upgrade = "never")
+#   devtools::install_github("jinworks/CellChat", upgrade = "never")
+#   install.packages("https://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_3.4.4.tar.gz", repos = NULL, type = "source")
+#   reticulate::install_python(version = '3.8')
+#   reticulate::py_install(packages = 'umap-learn')
+# } 
 
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
