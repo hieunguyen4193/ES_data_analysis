@@ -19,7 +19,7 @@ source(file.path(path.to.pipeline.src, "processes_src", "helper_functions.R"))
 
 src.dir <- "12_process_sub_clusters"
 path.to.rmd <- file.path(path.to.main.src, src.dir, "12_downstream_analysis.Rmd")
-output_dir <- file.path(path.to.save.html, "12_output")
+output_dir <- file.path(path.to.save.html, "12_output_remove_BCR_TCR")
 dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
 integration.config <- list(

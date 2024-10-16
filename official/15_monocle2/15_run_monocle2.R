@@ -7,6 +7,12 @@ my_random_seed <- 42
 library(monocle)
 library(Seurat)
 library(stringr)
+if ("svglite" %in% installed.packages() == FALSE){
+  local({r <- getOption("repos")
+  r["CRAN"] <- "http://cran.r-project.org"
+  options(repos=r)})
+  install.packages("svglite")
+}
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
@@ -42,7 +48,6 @@ for (path.to.monocle in all.monocle.objs){
       print("monocle result exists, reading in...")
       monocle.obj <- readRDS(file.path(path.to.15.output, "monocle_obj.rds"))
     }
-    all.monocle.obj[[sub.cluster]] <- monocle.obj
     
     ##### plot cell trajectory, color by seurat clusters
     p <- plot_cell_trajectory(monocle.obj, color_by = "seurat_clusters")

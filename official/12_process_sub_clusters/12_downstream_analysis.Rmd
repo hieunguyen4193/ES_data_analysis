@@ -93,7 +93,7 @@ path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
 path.to.01.output <- file.path(path.to.main.output, "01_output")
 path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
-path.to.12.output <- file.path(path.to.main.output, "12_output", integration.case, regression.mode, filter.mode, subcluster.name)
+path.to.12.output <- file.path(path.to.main.output, "12_output_remove_BCR_TCR", integration.case, regression.mode, filter.mode, subcluster.name)
   
 path.to.s.obj <- file.path(path.to.12.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT))
 s.obj <- readRDS(path.to.s.obj)

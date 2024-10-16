@@ -4,16 +4,6 @@
 gc()
 rm(list = ls())
 
-##### install CellChat
-if ("CellChat" %in% row.names(installed.packages()) == FALSE){
-  print("Re install Cellchat from its github repo")
-  devtools::install_github("immunogenomics/presto", upgrade = "never")
-  devtools::install_github("jinworks/CellChat", upgrade = "never")
-  install.packages("https://cran.r-project.org/src/contrib/Archive/ggplot2/ggplot2_3.4.4.tar.gz", repos = NULL, type = "source")
-} 
-reticulate::install_python(version = '3.8')
-reticulate::py_install(packages = 'umap-learn')
-
 outdir <- "/media/hieunguyen/CRC1382H/CRC1382/outdir"
 PROJECT <- "EStange_20240411_reduced_RNAcontam_0"
 
@@ -41,7 +31,10 @@ dir.create(output.dir, showWarnings = FALSE, recursive = TRUE)
 samplesheets <- list(
   `03_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_03_output_simplified.xlsx")),
   `10_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_10_output_simplified.xlsx")),
-  `12_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx"))
+  `12_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx")) %>%
+    subset(output_index == "12_output"),
+  `12_output_remove_BCR_TCR` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx")) %>%
+    subset(output_index == "12_output_remove_BCR_TCR")
 )
 
 all.samples <- c("adult_GF",
@@ -58,12 +51,12 @@ all.samples <- c("adult_GF",
 filter10cells <- "Filter10"
 comparison.samplesheet <- read.csv(file.path(path.to.main.src, "13_DGE", "sample_comparision_list.csv"))
 
-rerun <- TRUE
+rerun <- FALSE
 for (i in seq(1, nrow(comparison.samplesheet))){
   sample1 <- comparison.samplesheet[i, "sample1"]
   sample2 <- comparison.samplesheet[i, "sample2"]
   if (sample1 %in% c("d10_SPF", "adult_SPF") & sample2 == "SC12"){
-   print(sprintf("skip this case, when sample1 = %s and sample2 = %s", sample1, sample2))
+  print(sprintf("skip this case, when sample1 = %s and sample2 = %s", sample1, sample2))
   } else {
     for (output.index in names(samplesheets)){
       input.samplesheet <- samplesheets[[output.index]]
@@ -151,7 +144,7 @@ for (i in seq(1, nrow(comparison.samplesheet))){
             path.to.save.output = path.to.save.CellChat.output,
             filter10cells = filter10cells
           )
-        } else if (output.index == "12_output"){
+        } else if (output.index %in% c("12_output", "12_output_remove_BCR_TCR")){
           integration.case <- input.samplesheet[row_i, ][["integration.case"]]
           regression.mode <- input.samplesheet[row_i, ][["regression.mode"]]
           filter.mode <- input.samplesheet[row_i, ][["filter.mode"]]
