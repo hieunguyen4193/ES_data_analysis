@@ -21,7 +21,7 @@ path.to.monocle.objs <- file.path(path.to.main.output, "15_output", "input_monoc
 
 all.monocle.objs <- Sys.glob(file.path(path.to.monocle.objs, "*/*/*/*/*/*.rds"))
 
-for (path.to.monocle in all.monocle.objs){
+for (path.to.monocle in all.monocle.objs[[3]]){
   print(sprintf("working on %s", path.to.monocle))
   split.name <- str_split(path.to.monocle, "/")[[1]]
   output.index <- split.name[[10]]

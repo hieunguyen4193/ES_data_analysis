@@ -143,7 +143,6 @@ for (output.index in names(samplesheets)){
                                                sprintf("%s_%s", sample1, sample2), 
                                                "part2",
                                                sprintf("cluster_%s", cluster.id))
-          
           input.params <- list(
             sample1 = sample1,
             sample2 = sample2,
