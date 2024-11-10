@@ -88,7 +88,6 @@ trb.countdf$CDR3seq <- unlist(lapply(
   }
 ))
 
-
 path.to.output.fasta <- file.path(path.to.save.topClone.fasta, "TRA.fasta")
 ##### save to FASTA files
 sink(path.to.output.fasta)
@@ -116,7 +115,6 @@ for (i in seq(1, nrow(trb.countdf))){
   cat("\n")
 }
 sink()
-
 
 writexl::write_xlsx(tra.countdf, file.path(path.to.save.topClone.fasta, "TRA.top300.xlsx"))
 writexl::write_xlsx(trb.countdf, file.path(path.to.save.topClone.fasta, "TRB.top300.xlsx"))
