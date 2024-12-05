@@ -92,4 +92,21 @@ for (chain in c("TRA", "TRB")){
   trab.countdf$min.dist <- min.dist
   trab.countdf$max.dist <- max.dist
   writexl::write_xlsx(trab.countdf, file.path(path.to.save.topClone.fasta, sprintf("%s.top300.xlsx", chain)))
+  
+  path.to.output.fasta <- file.path(path.to.save.topClone.fasta, 
+                                    sprintf("%s.fasta", chain))
+  ##### save to FASTA files
+  sink(path.to.output.fasta)
+  for (i in seq(1, nrow(trab.countdf))){
+    clonenal.type <- trab.countdf[i, ]$cloneID
+    output.seq <- trab.countdf[i, ]$CDR3seq
+    output.info <- sprintf(">%s", clonenal.type)            
+    cat(output.info)
+    cat("\n")
+    cat(output.seq)
+    cat("\n")
+  }
+  sink()
 }
+
+
