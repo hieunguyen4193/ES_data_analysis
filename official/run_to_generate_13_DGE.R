@@ -31,7 +31,8 @@ samplesheets <- list(
  `12_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx")) %>%
    subset(output_index == "12_output"),
  `12_output_remove_BCR_TCR` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_12_output_simplified.xlsx")) %>%
-   subset(output_index == "12_output_remove_BCR_TCR")
+   subset(output_index == "12_output_remove_BCR_TCR"),
+ `17_output` = readxl::read_excel(file.path(path.to.save.samplesheet, "SampleSheet_17_output_simplified.xlsx"))
 )
 
 comparison.samplesheet <- read.csv(file.path(path.to.main.src, src.dir, "sample_comparision_list.csv"))
@@ -75,7 +76,7 @@ for (output.index in names(samplesheets)){
           path.to.s.obj = path.to.s.obj,
           path.to.save.output = path.to.save.DGE.output
         )
-      } else if (output.index %in% c("12_output", "12_output_remove_BCR_TCR")){
+      } else if (output.index %in% c("12_output", "12_output_remove_BCR_TCR", "17_output")){
         integration.case <- input.samplesheet[row_i, ][["integration.case"]]
         regression.mode <- input.samplesheet[row_i, ][["regression.mode"]]
         filter.mode <- input.samplesheet[row_i, ][["filter.mode"]]

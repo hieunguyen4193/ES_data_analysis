@@ -151,6 +151,7 @@ if ("R.utils" %in% installed.packages() == FALSE){
 
 run_save_mex <- function(seurat_obj, savedir, annot.col.name){
   # Run function
+  print("running writeCounts ...")
   writeCounts(
     savedir,
     GetAssayData(seurat_obj, assay="RNA", slot="counts"),
@@ -159,6 +160,9 @@ run_save_mex <- function(seurat_obj, savedir, annot.col.name){
     feature.type = GetAssay(seurat_obj)@meta.features[["feature_type"]],
     barcodes = colnames(seurat_obj)
   )
+  print("finished writeCounts")
+  print(seurat_obj)
+  print("start bundleOuputs ...")
   bundleOutputs(out_dir = savedir, data = seurat_obj, cell_type = annot.col.name)
   p <- DimPlot(object = seurat_obj, reduction = "cca_UMAP", label = TRUE, label.box = TRUE, group.by = annot.col.name)
   ggsave(plot = p, filename = "UMAP_annotated.svg", path = savedir, dpi = 300, width = 14, height = 10, device = "svg")

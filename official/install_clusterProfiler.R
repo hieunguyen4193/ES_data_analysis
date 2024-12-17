@@ -1,10 +1,34 @@
-#####----------------------------------------------------------------------------#####
-##### install cluster profiler
-#####----------------------------------------------------------------------------#####
-# remove.packages("DOSE")
-# remove.packages("GOSemSim")
-# remove.packages("yulab.utils")
-# remove.packages("clusterProfiler")
+#####----------------------------------------------------------------------#####
+##### UPGRADE THE CLUSTERPROFILER PACKAGES
 devtools::install_github("YuLab-SMU/yulab.utils", upgrade = "never")
-remotes::install_github("GuangchuangYu/GOSemSim", upgrade = "never")
-remotes::install_github("GuangchuangYu/clusterProfiler", upgrade = "never")
+if ("clusterProfiler" %in% installed.packages() == TRUE){
+  if (packageVersion("clusterProfiler") != "4.13.4"){
+    remove.packages("DOSE")
+    remove.packages("GOSemSim")
+    remove.packages("yulab.utils")
+    remove.packages("clusterProfiler")
+    remotes::install_github("GuangchuangYu/GOSemSim", upgrade = "never")
+    remotes::install_github("GuangchuangYu/clusterProfiler", upgrade = "never")
+  }
+} else {
+  remotes::install_github("GuangchuangYu/GOSemSim", upgrade = "never")
+  remotes::install_github("GuangchuangYu/clusterProfiler", upgrade = "never")
+}
+
+##### install cellchat v2 from my github repo
+
+if ("CellChat" %in% installed.packages()){
+  remove.packages("CellChat")
+}
+
+devtools::install_github("immunogenomics/presto", upgrade = "never")
+devtools::install_github("https://github.com/hieunguyen4193/CellChatv2_862ab34", upgrade = "never")
+
+##### temporary fix --> https://github.com/jinworks/CellChat/issues/202
+# cellchat.sample1@data.smooth <- cellchat.sample1@data.project
+# cellchat.sample2@data.smooth <- cellchat.sample2@data.project
+##### issue: non conformable array: https://github.com/sqjin/CellChat/issues/708
+##### https://github.com/jinworks/CellChat/issues/159
+
+reticulate::install_python(version = '3.8')
+reticulate::py_install(packages = 'umap-learn')
