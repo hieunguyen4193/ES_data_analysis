@@ -73,17 +73,6 @@ if ("heatmaply" %in% installed.packages() == FALSE){
 library(org.Mm.eg.db)
 # devtools::install_github("YuLab-SMU/yulab.utils", upgrade = "never")
 
-#####----------------------------------------------------------------------#####
-##### UPGRADE THE CLUSTERPROFILER PACKAGES
-if (packageVersion("clusterProfiler") != "4.13.4"){
-  remove.packages("DOSE")
-  remove.packages("GOSemSim")
-  remove.packages("yulab.utils")
-  remove.packages("clusterProfiler")
-  remotes::install_github("GuangchuangYu/GOSemSim", upgrade = "never")
-  remotes::install_github("GuangchuangYu/clusterProfiler", upgrade = "never")
-}
-#####----------------------------------------------------------------------#####
 scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_pipeline_SeuratV5/processes_src"
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
