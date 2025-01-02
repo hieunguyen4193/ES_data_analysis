@@ -1,0 +1,14 @@
+index,sample1,sample2
+1,d7_SPF,d7_GF
+2,d4_SPF,d4_GF
+3,adult_SPF,adult_GF
+4,d10_SPF,SC12
+5,adult_SPF,d4_GF
+6,adult_SPF,d10_SPF
+7,adult_SPF,d4_SPF
+8,adult_SPF,d15_SPF
+9,adult_SPF,d7_GF
+10,adult_SPF,d20_SPF
+11,adult_SPF,d7_SPF
+12,adult_SPF,SC12
+13,adult_SPF,SC11
