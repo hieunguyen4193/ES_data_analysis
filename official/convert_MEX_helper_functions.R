@@ -5,7 +5,7 @@ bundleOutputs <- function(out_dir, data, barcodes = colnames(data), cell_type = 
     data.table::fwrite(
       data.table::data.table(
         barcode = barcodes,
-        annotation = unlist(seurat_obj[[cell_type]])
+        annotation = unlist(data[[cell_type]])
       )[subset, ],
       file.path(out_dir, "annotations.csv")
     )
@@ -13,7 +13,7 @@ bundleOutputs <- function(out_dir, data, barcodes = colnames(data), cell_type = 
     write.table(
       data.frame(
         barcode = barcodes,
-        annotation = unlist(seurat_obj[[cell_type]])
+        annotation = unlist(data[[cell_type]])
       )[subset, ],
       file.path(out_dir, "annotations.csv"),
       sep = ",", row.names = FALSE

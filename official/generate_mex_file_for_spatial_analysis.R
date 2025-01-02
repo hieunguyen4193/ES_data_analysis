@@ -115,25 +115,25 @@ use.sctransform <- TRUE
 vars.to.regress <- c("percent.mt")
 cluster.resolution <- 0.5
 
-DefaultAssay(s.obj) <- "RNA"
-s.obj <- JoinLayers(s.obj)
-
-if (file.exists(file.path(path.to.save.cloupe.file, "s8_output", "EStange_20240411_reduced_RNAcontam_0.output.s8.rds")) == FALSE){
-  print("running integration ...")
-  s.obj.integrated <- s8.integration.and.clustering_V5(s.obj = s.obj, 
-                                                       save.RDS.s8 = TRUE,
-                                                       path.to.output = path.to.save.cloupe.file,
-                                                       use.sctransform = TRUE,
-                                                       num.PCA = num.PCA,
-                                                       num.PC.used.in.UMAP = num.PC.used.in.UMAP,
-                                                       num.PC.used.in.Clustering = num.PC.used.in.Clustering,
-                                                       cluster.resolution = cluster.resolution,
-                                                       vars.to.regress = vars.to.regress, 
-                                                       PROJECT = sprintf("%s_subsampling", PROJECT))
-} else {
-  print("File exists. reading in  ...")
-  s.obj.integrated <- readRDS(file.path(path.to.save.cloupe.file, "s8_output", "EStange_20240411_reduced_RNAcontam_0.output.s8.rds"))
-}
+# DefaultAssay(s.obj) <- "RNA"
+# s.obj <- JoinLayers(s.obj)
+# 
+# if (file.exists(file.path(path.to.save.cloupe.file, "s8_output", "EStange_20240411_reduced_RNAcontam_0.output.s8.rds")) == FALSE){
+#   print("running integration ...")
+#   s.obj.integrated <- s8.integration.and.clustering_V5(s.obj = s.obj, 
+#                                                        save.RDS.s8 = TRUE,
+#                                                        path.to.output = path.to.save.cloupe.file,
+#                                                        use.sctransform = TRUE,
+#                                                        num.PCA = num.PCA,
+#                                                        num.PC.used.in.UMAP = num.PC.used.in.UMAP,
+#                                                        num.PC.used.in.Clustering = num.PC.used.in.Clustering,
+#                                                        cluster.resolution = cluster.resolution,
+#                                                        vars.to.regress = vars.to.regress, 
+#                                                        PROJECT = sprintf("%s_subsampling", PROJECT))
+# } else {
+#   print("File exists. reading in  ...")
+#   s.obj.integrated <- readRDS(file.path(path.to.save.cloupe.file, "s8_output", "EStange_20240411_reduced_RNAcontam_0.output.s8.rds"))
+# }
 
 ##### CONVERT 
 source(
@@ -152,9 +152,12 @@ if ("R.utils" %in% installed.packages() == FALSE){
 run_save_mex <- function(seurat_obj, savedir, annot.col.name){
   # Run function
   print("running writeCounts ...")
+  count.mat <- GetAssayData(seurat_obj, assay="RNA", slot="counts")
+  excluded.genes <- setdiff(row.names(count.mat), row.names(s.obj))
+  print(dim(count.mat[setdiff(row.names(count.mat), excluded.genes), ]))
   writeCounts(
     savedir,
-    GetAssayData(seurat_obj, assay="RNA", slot="counts"),
+    count.mat[setdiff(row.names(count.mat), excluded.genes), ],
     gene.id = rownames(seurat_obj),
     gene.symbol = GetAssay(seurat_obj)@meta.features[["feature_name"]],
     feature.type = GetAssay(seurat_obj)@meta.features[["feature_type"]],
@@ -168,5 +171,5 @@ run_save_mex <- function(seurat_obj, savedir, annot.col.name){
   ggsave(plot = p, filename = "UMAP_annotated.svg", path = savedir, dpi = 300, width = 14, height = 10, device = "svg")
 }
 
-run_save_mex(seurat_obj = s.obj.integrated, savedir = file.path(path.to.save.cloupe.file, "newVersion_025122024_reIntegrated"), annot.col.name = "celltype")
-run_save_mex(seurat_obj = s.obj.no.reInt, savedir = file.path(path.to.save.cloupe.file, "newVersion_025122024"), annot.col.name = "celltype")
+# run_save_mex(seurat_obj = s.obj.integrated, savedir = file.path(path.to.save.cloupe.file, "newVersion_025122024_reIntegrated"), annot.col.name = "celltype")
+run_save_mex(seurat_obj = s.obj.no.reInt, savedir = file.path(path.to.save.cloupe.file, "newVersion_20122024"), annot.col.name = "celltype")
