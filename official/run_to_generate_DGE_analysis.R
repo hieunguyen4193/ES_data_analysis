@@ -21,14 +21,14 @@ src.dir <- "13_DGE"
 path.to.rmd <- file.path(path.to.main.src, src.dir, "13_DGE_analysis.Rmd")
 path.to.pseudobulk.rmd <- file.path(path.to.main.src, src.dir, "13_DGE_analysis_pseudobulk_clusters.Rmd")
 
-path.to.13.output <- file.path(path.to.save.html, "13_output")
+path.to.13.output <- file.path(path.to.main.output, "13_output")
 dir.create(path.to.13.output, showWarnings = FALSE, recursive = TRUE)
 
 samplesheet <- readxl::read_excel(file.path(path.to.main.src, "SampleSheet_for_DGE_CellChat_Monocle_RNAvelocity.xlsx"))
 samplelist <- read.csv(file.path(path.to.main.src, src.dir, "sample_comparision_list.csv"))
 
-for (i in seq(1, nrow(samplesheet))){
-  for (j in seq(1, nrow(samplelist))){
+for (row_i in seq(1, nrow(samplesheet))){
+  for (row_j in seq(1, nrow(samplelist))){
     input.info <- c()
     input.info.cols <- c("integration.case", 
                          "regression.mode", 
@@ -36,18 +36,18 @@ for (i in seq(1, nrow(samplesheet))){
                          "sub.cluster.id")
     
     for (c in input.info.cols){
-      if (is.na(samplesheet[i, ][[c]]) == FALSE){
-        input.info <- c(input.info, samplesheet[i, ][[c]])
+      if (is.na(samplesheet[row_i, ][[c]]) == FALSE){
+        input.info <- c(input.info, samplesheet[row_i, ][[c]])
       }
     }
     
-    sample1 <- samplelist[j, ]$sample1
-    sample2 <- samplelist[j, ]$sample2
-    path.to.s.obj <- samplesheet[i, ]$path
+    sample1 <- samplelist[row_j, ]$sample1
+    sample2 <- samplelist[row_j, ]$sample2
+    path.to.s.obj <- samplesheet[row_i, ]$path
     
     path.to.save.output <- file.path(
       path.to.13.output, 
-      sprintf("from_%s", samplesheet[i, ]$output_index),
+      sprintf("from_%s", samplesheet[row_i, ]$output_index),
       paste0(input.info, collapse = "/"),
       sprintf("%s_vs_%s", sample1, sample2)
     )
@@ -55,11 +55,12 @@ for (i in seq(1, nrow(samplesheet))){
     output_file <- sprintf("%s_vs_%s.part1.html", sample1, sample2)
     output_dir <- file.path(
       path.to.save.html, 
-      sprintf("from_%s", samplesheet[i, ]$output_index),
+      sprintf("from_%s", samplesheet[row_i, ]$output_index),
       paste0(input.info, collapse = "/"),
       sprintf("%s_vs_%s", sample1, sample2)
     )
     dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+    
     ##### Generate single cell DGE
     if (file.exists(file.path(output_dir, output_file)) == FALSE){
       print(sprintf("Generate new html file %s...", file.path(output_dir, output_file) ))
@@ -107,14 +108,14 @@ for (i in seq(1, nrow(samplesheet))){
     for (k in available.clusters){
       output_dir2 <- file.path(
         path.to.save.html, 
-        sprintf("from_%s", samplesheet[i, ]$output_index),
+        sprintf("from_%s", samplesheet[row_i, ]$output_index),
         paste0(input.info, collapse = "/"),
         sprintf("%s_vs_%s", sample1, sample2),
         sprintf("cluster_%s", k)
       )
       path.to.save.pseudobulk.output <- file.path(
         path.to.13.output, 
-        sprintf("from_%s", samplesheet[i, ]$output_index),
+        sprintf("from_%s", samplesheet[row_i, ]$output_index),
         paste0(input.info, collapse = "/"),
         sprintf("%s_vs_%s", sample1, sample2),
         "part2",
@@ -140,4 +141,3 @@ for (i in seq(1, nrow(samplesheet))){
     }
   }
 }
-
