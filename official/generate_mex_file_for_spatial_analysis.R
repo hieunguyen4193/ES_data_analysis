@@ -49,6 +49,10 @@ path.to.10.output <- file.path(path.to.main.output, "10_output", integration.cas
 path.to.s.obj <- file.path(path.to.10.output, "s8_output", sprintf("%s.output.s8.rds", PROJECT))
 s.obj <- readRDS(path.to.s.obj)
 
+##### update 07.01.2025
+##### subset: keep only Hashtag1
+s.obj <- subset(s.obj, HTO_classification == "Hashtag1-TotalSeqC")
+
 ##### sub-sampling each clusters of the main seurat object
 sampling.rate <- 0.75
 
@@ -172,4 +176,4 @@ run_save_mex <- function(seurat_obj, savedir, annot.col.name){
 }
 
 # run_save_mex(seurat_obj = s.obj.integrated, savedir = file.path(path.to.save.cloupe.file, "newVersion_025122024_reIntegrated"), annot.col.name = "celltype")
-run_save_mex(seurat_obj = s.obj.no.reInt, savedir = file.path(path.to.save.cloupe.file, "newVersion_20122024"), annot.col.name = "celltype")
+run_save_mex(seurat_obj = s.obj.no.reInt, savedir = file.path(path.to.save.cloupe.file, "newVersion_20250107"), annot.col.name = "celltype")

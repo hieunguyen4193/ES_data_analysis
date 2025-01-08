@@ -76,22 +76,25 @@ for (row_i in seq(1, nrow(samplesheet))){
       sprintf("%s_vs_%s", sample1, sample2)
     )
     dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-    if (file.exists(file.path(output_dir, output_file)) == FALSE){
-      print(sprintf("Generate new html file %s...", file.path(output_dir, output_file) ))
-      rmarkdown::render(input = path.to.rmd,
-                        output_file = output_file,
-                        output_dir = output_dir,
-                        params = list(
-                          path.to.s.obj = path.to.s.obj,
-                          sample1 = sample1,
-                          path.to.cellchat1 = path.to.cellchat1,
-                          sample2 = sample2,
-                          path.to.cellchat2 = path.to.cellchat2,
-                          path.to.save.output = path.to.save.output,
-                          filter10cells = filter10cells))
-    } else {
-      print(sprintf("html file %s exists...", file.path(output_dir, output_file) ))
-    }
     
+    if (sample1 != "d10_SPF" & sample2 != "SC12"){
+      if (file.exists(file.path(output_dir, output_file)) == FALSE){
+        
+        print(sprintf("Generate new html file %s...", file.path(output_dir, output_file) ))
+        rmarkdown::render(input = path.to.rmd,
+                          output_file = output_file,
+                          output_dir = output_dir,
+                          params = list(
+                            path.to.s.obj = path.to.s.obj,
+                            sample1 = sample1,
+                            path.to.cellchat1 = path.to.cellchat1,
+                            sample2 = sample2,
+                            path.to.cellchat2 = path.to.cellchat2,
+                            path.to.save.output = path.to.save.output,
+                            filter10cells = filter10cells))
+      } else {
+        print(sprintf("html file %s exists...", file.path(output_dir, output_file) ))
+      }
+    }
   }
 }

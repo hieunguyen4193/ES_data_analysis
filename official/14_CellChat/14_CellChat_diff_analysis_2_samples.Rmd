@@ -61,21 +61,13 @@ scrna_pipeline_src <- "/home/hieunguyen/CRC1382/src_2023/src_pipeline/scRNA_GEX_
 source(file.path(scrna_pipeline_src, "import_libraries.R"))
 source(file.path(scrna_pipeline_src, "helper_functions.R"))
 
-# path.to.s.obj <- params$path.to.s.obj
-# sample1 <- params$sample1
-# path.to.cellchat1 <- params$path.to.cellchat1
-# sample2 <- params$sample2
-# path.to.cellchat2 <- params$path.to.cellchat2
-# path.to.save.output <- params$path.to.save.output
-# filter10cells <- params$filter10cells
-
-path.to.s.obj <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/data_analysis/12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/s8_output/EStange_20240411_reduced_RNAcontam_0.output.s8.rds"
-sample1 <- "adult_SPF"
-path.to.cellchat1 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/adult_SPF/CellChat_object.adult_SPF.Filter10.rds"
-sample2 <- "SC12"
-path.to.cellchat2 <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/SC12/CellChat_object.SC12.Filter10.rds"
-path.to.save.output <- "/media/hieunguyen/CRC1382H/CRC1382/outdir/EStange_20240411_reduced_RNAcontam_0/14_output/from_12_output/remove_d4_LPS_SC5/CC_differences/nCount_and_BCR_TCRgenes/B_cells/adult_SPF_vs_SC12"
-filter10cells <- "Filter10"
+path.to.s.obj <- params$path.to.s.obj
+sample1 <- params$sample1
+path.to.cellchat1 <- params$path.to.cellchat1
+sample2 <- params$sample2
+path.to.cellchat2 <- params$path.to.cellchat2
+path.to.save.output <- params$path.to.save.output
+filter10cells <- params$filter10cells
 
 dir.create(path.to.save.output, showWarnings = FALSE, recursive = TRUE)
 s.obj <- readRDS(path.to.s.obj)
