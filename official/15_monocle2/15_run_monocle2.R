@@ -35,6 +35,8 @@ parser$add_argument("-i", "--input_row", action="store",
 args <- parser$parse_args()
 row_i <- args$input_row
 
+# row_i <- 3
+
 output.index <- samplesheet[row_i, ]$output_index
 input.info <- c()
 input.info.cols <- c("integration.case", 
