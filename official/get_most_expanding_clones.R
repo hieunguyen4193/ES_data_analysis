@@ -26,8 +26,11 @@ path.to.main.input <- file.path(outdir, PROJECT)
 path.to.main.output <- file.path(outdir, PROJECT, "data_analysis")
 path.to.12.output <- file.path(path.to.main.output, "12_output_remove_BCR_TCR", integration.case, regression.mode, filter.mode, subcluster.name)
 
+input.ht <- "Hashtag1-TotalSeqC"
+# input.ht <- "Hashtag2-TotalSeqC"
+
 # path.to.save.topClone.fasta <- file.path(path.to.main.output, "topClone_FASTA_20250107")
-path.to.save.topClone.fasta <- file.path(path.to.main.output, "topClone_FASTA_20250107_full")
+path.to.save.topClone.fasta <- file.path(path.to.main.output, "topclone_FASTA_20250114", input.ht)
 dir.create(path.to.save.topClone.fasta, showWarnings = FALSE, recursive = TRUE)
 
 path.to.VDJ.input <- "/media/hieunguyen/HD01/storage/EStange/EStange_20240411/VDJ"
@@ -48,7 +51,7 @@ s.obj <- readRDS(file.path(path.to.12.output, "s8_output", "EStange_20240411_red
 
 ##### update 07.01.2025
 ##### subset: keep only Hashtag1
-# s.obj <- subset(s.obj, HTO_classification == "Hashtag1-TotalSeqC")
+s.obj <- subset(s.obj, HTO_classification == input.ht)
 
 meta.data <- s.obj@meta.data %>% rownames_to_column("barcode") %>% subset(select = -c(CTaa))
 all.clonedf <- subset(all.clonedf, all.clonedf$barcode %in% colnames(s.obj)) 
@@ -56,9 +59,13 @@ all.clonedf <- subset(all.clonedf, all.clonedf$barcode %in% colnames(s.obj))
 # merge clone information with the metadata of the seurat object. 
 all.clonedf <- merge(all.clonedf, meta.data, by.x = "barcode", by.y = "barcode")
 
-for (chain in c("TRA", "TRB")){
-  input.clonedf <- subset(all.clonedf, all.clonedf$chain == chain)
-  dir.create(file.path(path.to.save.topClone.fasta, chain), showWarnings = FALSE, recursive = TRUE)
+add.seq <- "CAAERNSNNRIFF_CAWSRTGEDTQYF"
+add.seqs <- list(TRA = "CAAERNSNNRIFF",
+                 TRB = "CAWSRTGEDTQYF")
+
+for (input.chain in c("TRA", "TRB")){
+  input.clonedf <- subset(all.clonedf, all.clonedf$chain == input.chain)
+  dir.create(file.path(path.to.save.topClone.fasta, input.chain), showWarnings = FALSE, recursive = TRUE)
   
   trab.countdf <- table(input.clonedf$cdr3) %>% as.data.frame()
   colnames(trab.countdf) <- c("CTaa", "count")
@@ -66,7 +73,14 @@ for (chain in c("TRA", "TRB")){
   trab.countdf$cloneID <- to_vec(
     for (item in seq(1, 300)) sprintf("ClonalType%s", item)
   )
-  
+  if (input.ht == "Hashtag1-TotalSeqC"){
+    trab.countdf <- rbind(
+      trab.countdf, 
+      data.frame(CTaa = add.seqs[[input.chain]], 
+                 count = nrow(subset(all.clonedf, all.clonedf$cdr3 == add.seqs[[input.chain]])),
+                 cloneID = "Add.ClonalType")
+    )    
+  }
   seqs <- c()
   min.dist <- c()
   max.dist <- c()
@@ -92,15 +106,15 @@ for (chain in c("TRA", "TRB")){
     }
     
     
-    writexl::write_xlsx(count.tmpdf, file.path(path.to.save.topClone.fasta, chain, sprintf("%s_count_and_edit_distance.xlsx", x)))
+    writexl::write_xlsx(count.tmpdf, file.path(path.to.save.topClone.fasta, input.chain, sprintf("%s_count_and_edit_distance.xlsx", x)))
   }
   trab.countdf$seq <- seqs
   trab.countdf$min.dist <- min.dist
   trab.countdf$max.dist <- max.dist
-  writexl::write_xlsx(trab.countdf, file.path(path.to.save.topClone.fasta, sprintf("%s.top300.xlsx", chain)))
+  writexl::write_xlsx(trab.countdf, file.path(path.to.save.topClone.fasta, sprintf("%s.top300.xlsx", input.chain)))
   
   path.to.output.fasta <- file.path(path.to.save.topClone.fasta, 
-                                    sprintf("%s.fasta", chain))
+                                    sprintf("%s.fasta", input.chain))
   ##### save to FASTA files
   sink(path.to.output.fasta)
   for (i in seq(1, nrow(trab.countdf))){
@@ -115,4 +129,31 @@ for (chain in c("TRA", "TRB")){
   sink()
 }
 
+meta.data <- s.obj@meta.data %>% 
+  rownames_to_column("barcode") %>% 
+  subset(select = c(barcode, CTaa)) %>%
+  rowwise() %>%
+  subset(is.na(CTaa) == FALSE) %>%
+  mutate(input.barcode = barcode) %>%
+  subset(grepl("NA_", CTaa) == FALSE) %>%
+  subset(grepl("_NA", CTaa) == FALSE) %>%
+  mutate(TRA = str_split(CTaa, "_")[[1]][[1]]) %>%
+  mutate(TRB = str_split(CTaa, "_")[[1]][[2]]) %>%
+  mutate(TRA_V_gene = paste(subset(all.clonedf, all.clonedf$chain == "TRA" & all.clonedf$barcode == input.barcode)$v_gene, collapse = ",")) %>%
+  mutate(TRA_J_gene = paste(subset(all.clonedf, all.clonedf$chain == "TRA" & all.clonedf$barcode == input.barcode)$j_gene, collapse = ",")) %>%
+  mutate(TRB_V_gene = paste(subset(all.clonedf, all.clonedf$chain == "TRB" & all.clonedf$barcode == input.barcode)$v_gene, collapse = ",")) %>%
+  mutate(TRB_J_gene = paste(subset(all.clonedf, all.clonedf$chain == "TRB" & all.clonedf$barcode == input.barcode)$j_gene, collapse = ","))
 
+meta.data <- meta.data %>% rowwise() %>%
+  mutate(VJ_CDR3_TRA = sprintf("%s_%s_%s", TRA_V_gene, TRA_J_gene, TRA)) %>%
+  mutate(VJ_CDR3_TRB = sprintf("%s_%s_%s", TRB_V_gene, TRB_J_gene, TRB))
+
+countdf <- data.frame( num.unique.CTaa = c(length(unique(meta.data$CTaa))),
+                       num.unique.TRA = c(length(unique(meta.data$TRA))),
+                       num.unique.TRB = c(length(unique(meta.data$TRB))),
+                       num.unique.TRA_VJ = c(length(unique(meta.data$VJ_CDR3_TRA))),
+                       num.unique.TRB_VJ = c(length(unique(meta.data$VJ_CDR3_TRB))),
+                       dupl.TRA = nrow(meta.data[duplicated(meta.data$TRA), ]),
+                       dupl.TRB = nrow(meta.data[duplicated(meta.data$TRB), ]))
+
+writexl::write_xlsx(countdf, file.path(path.to.save.topClone.fasta, "count_unique_clone.xlsx"))
