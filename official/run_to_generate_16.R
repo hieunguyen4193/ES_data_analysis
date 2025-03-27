@@ -26,7 +26,17 @@ dir.create(path.to.16.output, showWarnings = FALSE, recursive = TRUE)
 samplesheet <- readxl::read_excel(file.path(path.to.main.src, "SampleSheet_for_DGE_CellChat_Monocle_RNAvelocity.xlsx"))
 samplelist <- read.csv(file.path(path.to.main.src, "13_DGE", "sample_comparision_list.csv"))
 
-for (row_i in seq(1, nrow(samplesheet))){
+library(argparse)
+parser <- ArgumentParser()
+
+parser$add_argument("-i", "--row_i", action="store",
+                    help="Full name of the input project/dataset name")
+
+args <- parser$parse_args()
+
+row_i <- args$row_i
+
+# for (row_i in seq(1, nrow(samplesheet))){
     path.to.s.obj <- samplesheet[row_i, ]$path
     input.info <- c()
     input.info.cols <- c("integration.case", 
@@ -81,4 +91,4 @@ for (row_i in seq(1, nrow(samplesheet))){
     } else {
       print(sprintf("html file %s exists...", file.path(output_dir, output_file) ))
     }
-  }
+  # }
